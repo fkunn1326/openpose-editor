@@ -1,0 +1,5 @@
+{
+    "nuxt.isNuxtApp": false,
+    "editor.tabCompletion": "on",
+    "diffEditor.codeLens": true
+}
