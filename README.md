@@ -1,5 +1,7 @@
 ## Openpose Editor
 
+[日本語](README.md) | [English](README.en.md)
+
 ![image](https://user-images.githubusercontent.com/92153597/219921945-468b2e4f-a3a0-4d44-a923-13ceb0258ddc.png)
 
 Automatic1111/stable-diffusion-webui用のOpenpose Editor
