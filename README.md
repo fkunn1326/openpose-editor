@@ -15,3 +15,11 @@ Automatic1111/stable-diffusion-webui用のOpenpose Editor
 
 - 「Save PNG」: PNGで保存する
 - 「Send to ControlNet」: Controlnet拡張機能がインストールされている場合、画像をそこに送る
+
+## インストール方法
+
+1. "Extension" タブを開く
+2. "Install from URL" タブを開く
+3. "URL for extension's git repository" 欄にこのリポジトリの URL (https://github.com/fkunn1326/openpose-editor.git) を入れます。
+4. "Install" ボタンを押す
+5. WebUIを再起動する
