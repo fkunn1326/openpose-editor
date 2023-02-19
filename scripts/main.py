@@ -57,6 +57,7 @@ def on_ui_tabs():
           # delete = gr.Button(value="Delete")
         with gr.Row():
           # json_input = gr.Button(value="Load from JSON")
+          reset_btn = gr.Button(value="Reset")
           png_input = gr.Button(value="Detect from image")
           png_input_area = gr.Image(label="Detect from image", elem_id="openpose_editor_input")
           bg_input = gr.Button(value="Add Background image")
@@ -97,6 +98,7 @@ def on_ui_tabs():
     add.click(None, [], None, _js="addPose")
     png_input_area.change(estimate, [png_input_area], [jsonbox])
     send_output.click(None, [], None, _js="sendImage")
+    reset_btn.click(None, [], None, _js="resetCanvas")
 
   return [(openpose_editor, "OpenPose Editor", "openpose_editor")]
 

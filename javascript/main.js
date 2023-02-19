@@ -387,6 +387,12 @@ function initCanvas(elem){
     });
 }
 
+function resetCanvas(){
+    const canvas = openpose_editor_canvas;
+    canvas.clear()
+    canvas.backgroundColor = "#000"
+}
+
 function savePNG(){
     openpose_editor_canvas.getObjects("image").forEach((img) => {
         img.set({
