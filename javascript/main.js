@@ -382,12 +382,12 @@ function initCanvas(elem){
     })
     json_observer.observe(gradioApp().querySelector("#hide_json"), { "attributes": true })
 
-    document.addEventListener('keydown', function(e) {
-        if (e.key !== undefined) {
-            if((e.key == "z" && (e.metaKey || e.ctrlKey || e.altKey))) undo()
-            if((e.key == "y" && (e.metaKey || e.ctrlKey || e.altKey))) redo()
-        }
-    })
+    // document.addEventListener('keydown', function(e) {
+    //     if (e.key !== undefined) {
+    //         if((e.key == "z" && (e.metaKey || e.ctrlKey || e.altKey))) undo()
+    //         if((e.key == "y" && (e.metaKey || e.ctrlKey || e.altKey))) redo()
+    //     }
+    // })
 }
 
 function resetCanvas(){
