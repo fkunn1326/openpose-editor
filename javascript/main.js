@@ -88,6 +88,7 @@ function resizeCanvas(width, height){
 }
 
 function undo() {
+    const canvas = openpose_editor_canvas;
     if (undo_history.length > 0) {
         lockMode = true;
         if (undo_history.length > 1) redo_history.push(undo_history.pop());
@@ -100,13 +101,14 @@ function undo() {
 }
 
 function redo() {
+    const canvas = openpose_editor_canvas;
     if (redo_history.length > 0) {
         lockMode = true;
         const content = redo_history.pop();
         undo_history.push(content);
         canvas.loadFromJSON(content, function () {
         canvas.renderAll();
-        lockMode = false;
+            lockMode = false;
         });
     }
 }
@@ -380,11 +382,12 @@ function initCanvas(elem){
     })
     json_observer.observe(gradioApp().querySelector("#hide_json"), { "attributes": true })
 
-    document.body.addEventListener('keydown', (event) => {
-        if (event.key === 'v' && event.ctrlKey) {
-            alert("Ctrl+Vが押されました")
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== undefined) {
+            if((e.key == "z" && (e.metaKey || e.ctrlKey || e.altKey))) undo()
+            if((e.key == "y" && (e.metaKey || e.ctrlKey || e.altKey))) redo()
         }
-    });
+    })
 }
 
 function resetCanvas(){
@@ -399,6 +402,7 @@ function savePNG(){
             opacity: 0
         });
     })
+    if (openpose_editor_canvas.backgroundImage) openpose_editor_canvas.backgroundImage.opacity = 0
     openpose_editor_canvas.discardActiveObject();
     openpose_editor_canvas.renderAll()
     openpose_editor_elem.toBlob((blob) => {
@@ -413,6 +417,7 @@ function savePNG(){
             opacity: 1
         });
     })
+    if (openpose_editor_canvas.backgroundImage) openpose_editor_canvas.backgroundImage.opacity = 0.5
     openpose_editor_canvas.renderAll()
     return
 }
@@ -446,7 +451,7 @@ function sendImage(){
             opacity: 0
         });
     })
-    openpose_editor_canvas.backgroundImage.opacity = 0
+    if (openpose_editor_canvas.backgroundImage) openpose_editor_canvas.backgroundImage.opacity = 0
     openpose_editor_canvas.discardActiveObject();
     openpose_editor_canvas.renderAll()
     openpose_editor_elem.toBlob((blob) => {
@@ -473,7 +478,7 @@ function sendImage(){
             opacity: 1
         });
     })
-    openpose_editor_canvas.backgroundImage.opacity = 0.5
+    if (openpose_editor_canvas.backgroundImage) openpose_editor_canvas.backgroundImage.opacity = 0.5
     openpose_editor_canvas.renderAll()
 }
 
@@ -482,9 +487,9 @@ window.addEventListener('DOMContentLoaded', () => {
         if(!executed && gradioApp().querySelector('#openpose_editor_canvas')){
             executed = true;
             initCanvas(gradioApp().querySelector('#openpose_editor_canvas'))
-            gradioApp().querySelectorAll("#tabs > div > button").forEach((elem) => {
-                if (elem.innerText === "OpenPose Editor") elem.click()
-            })
+            // gradioApp().querySelectorAll("#tabs > div > button").forEach((elem) => {
+            //     if (elem.innerText === "OpenPose Editor") elem.click()
+            // })
             observer.disconnect();
         }
     })
