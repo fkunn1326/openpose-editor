@@ -26,6 +26,10 @@ Automatic1111/stable-diffusion-webui用のOpenpose Editor
 4. "Install" ボタンを押す
 5. WebUIを再起動する
 
+## 注意
+
+ConrtolNetの "Preprocessor" には、何も指定しないようにしてください。
+
 ## エラーの対策
 
 > urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:997)>
