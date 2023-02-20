@@ -12,13 +12,14 @@
 
 本插件实现以下操作：
 
--  添加一个新骨骼
--  从图片中识别姿势
--  添加背景图片
+-  「Add」：添加一个新骨骼
+-  「Detect from image」: 从图片中识别姿势
+-  「Add Background image」: 添加背景图片
+-  「Load JSON」：载入JSON文件
 
--  保存为PNG格式图片
--  将骨骼姿势发送到 ControlNet 
-
+-  「Save PNG」: 保存为PNG格式图片
+-  「Send to ControlNet」:将骨骼姿势发送到 ControlNet 
+-  「Save JSON」：将骨骼保存为JSON
 ## 安装方法
 
 1. 打开扩展（Extension）标签。
@@ -26,3 +27,15 @@
 3. 在扩展的 git 仓库网址（URL for extension's git repository）处输入 https://github.com/fkunn1326/openpose-editor.git
 4. 点击安装（Install）
 5. 重启 WebUI
+## 注意
+
+不要给ConrtolNet 的 "Preprocessor" 选项指定任何值，请保持在none状态
+
+## 常见问题
+Mac OS可能会出现：
+> urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:997)>
+
+请执行文件
+```
+/Applications/Python\ $version /Install\ Certificates.command
+```

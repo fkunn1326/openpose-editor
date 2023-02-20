@@ -54,7 +54,7 @@ let openpose_obj = {
     ]
 }
 
-const default_keypoints = [[241,77], [241,120], [277,119], [294,190], [311,268], [203,118], [191,182], [174,265], [266,242], [288,357], [303,460], [219,240], [200,358], [185,460], [232,59], [253,60], [225,70], [260,72]]
+const default_keypoints = [[241,77],[241,120],[191,118],[177,183],[163,252],[298,118],[317,182],[332,245],[225,241],[213,359],[215,454],[270,240],[282,360],[286,456],[232,59],[253,60],[225,70],[260,72]]
 
 function gradioApp() {
     const elems = document.getElementsByTagName('gradio-app')
@@ -120,6 +120,26 @@ function setPose(keypoints){
 
     canvas.backgroundColor = "#000"
 
+    const res = [];
+    for (let i = 0; i < keypoints.length; i += 18) {
+        const chunk = keypoints.slice(i, i + 18);
+        res.push(chunk);
+    }
+
+    for (item of res){
+        addPose(item)
+        openpose_editor_canvas.discardActiveObject();
+    }
+}
+
+function addPose(keypoints=undefined){
+    if (keypoints === undefined){
+        keypoints = default_keypoints;
+    }
+
+    const canvas = openpose_editor_canvas;
+    const group = new fabric.Group()
+
     function makeCircle(color, left, top, line1, line2, line3, line4, line5) {
         var c = new fabric.Circle({
             left: left,
@@ -171,9 +191,26 @@ function setPose(keypoints){
         })
         circle = makeCircle(`rgb(${connect_color[i].join(", ")})`, keypoints[i][0], keypoints[i][1], ...list)
         circle["id"] = i
-        circles.push(circles)
-        canvas.add(circle)
+        circles.push(circle)
+        // canvas.add(circle)
+        group.addWithUpdate(circle);
     }
+
+    canvas.discardActiveObject();
+    canvas.setActiveObject(group);
+    canvas.add(group);
+    group.toActiveSelection();
+    canvas.requestRenderAll();
+}
+
+function initCanvas(elem){
+    const canvas = window.openpose_editor_canvas = new fabric.Canvas(elem, {
+        backgroundColor: '#000',
+        // selection: false,
+        preserveObjectStacking: true
+    });
+
+    window.openpose_editor_elem = elem
 
     canvas.on('object:moving', function(e) {
         if ("_objects" in e.target) {
@@ -263,85 +300,6 @@ function setPose(keypoints){
         undo_history.push(JSON.stringify(canvas));
         redo_history.length = 0;
     });
-}
-
-function addPose(){
-    keypoints = default_keypoints
-
-    const canvas = openpose_editor_canvas;
-    const group = new fabric.Group()
-
-    function makeCircle(color, left, top, line1, line2, line3, line4, line5) {
-        var c = new fabric.Circle({
-            left: left,
-            top: top,
-            strokeWidth: 1,
-            radius: 5,
-            fill: color,
-            stroke: color
-        });
-        c.hasControls = c.hasBorders = false;
-
-        c.line1 = line1;
-        c.line2 = line2;
-        c.line3 = line3;
-        c.line4 = line4;
-        c.line5 = line5;
-
-        return c;
-    }
-
-    function makeLine(coords, color) {
-        return new fabric.Line(coords, {
-            fill: color,
-            stroke: color,
-            strokeWidth: 10,
-            selectable: false,
-            evented: false,
-        });
-    }
-
-    const lines = []
-    const circles = []
-
-    for (i = 0; i < connect_keypoints.length; i++){
-        // 接続されるidxを指定　[0, 1]なら0と1つなぐ
-        const item = connect_keypoints[i]
-        const line = makeLine(keypoints[item[0]].concat(keypoints[item[1]]), `rgba(${connect_color[i].join(", ")}, 0.7)`)
-        lines.push(line)
-        canvas.add(line)
-    }
-
-    for (i = 0; i < keypoints.length; i++){
-        list = []
-        connect_keypoints.filter((item, idx) => {
-            if(item.includes(i)){
-                list.push(lines[idx])
-                return idx
-            }
-        })
-        circle = makeCircle(`rgb(${connect_color[i].join(", ")})`, keypoints[i][0], keypoints[i][1], ...list)
-        circle["id"] = i
-        circles.push(circle)
-        // canvas.add(circle)
-        group.addWithUpdate(circle);
-    }
-
-    canvas.discardActiveObject();
-    canvas.setActiveObject(group);
-    canvas.add(group);
-    group.toActiveSelection();
-    canvas.requestRenderAll();
-}
-
-function initCanvas(elem){
-    const canvas = window.openpose_editor_canvas = new fabric.Canvas(elem, {
-        backgroundColor: '#000',
-        // selection: false,
-        preserveObjectStacking: true
-    });
-
-    window.openpose_editor_elem = elem
 
     resizeCanvas(...openpose_obj.resolution)
 
@@ -350,6 +308,7 @@ function initCanvas(elem){
     undo_history.push(JSON.stringify(canvas));
 
     const json_observer = new MutationObserver((m) => {
+        if(gradioApp().querySelector('#tab_openpose_editor').style.display!=='block') return;
         try {
             const raw = gradioApp().querySelector("#hide_json").querySelector("textarea").value.replaceAll("'", '"')
             const json = JSON.parse(raw)
@@ -376,6 +335,11 @@ function initCanvas(elem){
                 canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
                     opacity: 0.5
                 });
+                const img = new Image();
+                img.onload = function() {
+                    resizeCanvas(this.width, this.height)
+                }
+                img.src = dataUri;
             }
             fileReader.readAsDataURL(gradioApp().querySelector("#openpose_editor_input").querySelector("input").files[0]);
         } catch(e){console.log(e)}
@@ -422,6 +386,58 @@ function savePNG(){
     return
 }
 
+function saveJSON(){
+    const canvas = openpose_editor_canvas
+    const json = JSON.stringify({
+        "width": canvas.width,
+        "height": canvas.height,
+        "keypoints": openpose_editor_canvas.getObjects().filter((item) => {
+            if (item.type === "circle") return item
+        }).map((item) => {
+            return [Math.round(item.left), Math.round(item.top)]
+        })
+    }, null, 4)
+    const blob = new Blob([json], {
+        type: 'text/plain'
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "pose.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function loadJSON(){
+    const input = document.createElement("input");
+    input.type = "file"
+    input.click()
+    input.addEventListener("change", function(e){
+        const file = e.target.files[0];
+		var fileReader = new FileReader();
+		fileReader.onload = function() {
+            try {
+                const json = JSON.parse(this.result)
+                if (json["width"] && json["height"]) {
+                    resizeCanvas(json["width"], json["height"])
+                }else{
+                    throw new Error('width, height is invalid');
+                }
+                if (json["keypoints"].length % 18 === 0) {
+                    setPose(json["keypoints"])
+                }else{
+                    throw new Error('keypoints is invalid')
+                }
+                return [json["width"], json["height"]]
+            }catch(e){
+                console.error(e)
+                alert("Invalid JSON")
+            }
+		}
+		fileReader.readAsText(file);
+    })
+    input.click()
+}
+
 function addBackground(){
     const input = document.createElement("input");
     input.type = "file"
@@ -435,6 +451,11 @@ function addBackground(){
             canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
                 opacity: 0.5
             });
+            const img = new Image();
+            img.onload = function() {
+                resizeCanvas(this.width, this.height)
+            }
+            img.src = dataUri;
 		}
 		fileReader.readAsDataURL(file);
     })

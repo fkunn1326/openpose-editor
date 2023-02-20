@@ -57,8 +57,8 @@ def on_ui_tabs():
           add = gr.Button(value="Add", variant="primary")
           # delete = gr.Button(value="Delete")
         with gr.Row():
-          # json_input = gr.Button(value="Load from JSON")
           reset_btn = gr.Button(value="Reset")
+          json_input = gr.Button(value="Load from JSON")
           png_input = gr.Button(value="Detect from image")
           png_input_area = gr.Image(label="Detect from image", elem_id="openpose_editor_input")
           bg_input = gr.Button(value="Add Background image")
@@ -68,7 +68,7 @@ def on_ui_tabs():
         canvas = gr.HTML('<canvas id="openpose_editor_canvas" width="512" height="512" style="margin: 0.25rem; border-radius: 0.25rem; border: 0.5px solid"></canvas>')
         jsonbox = gr.Text(label="json", elem_id="hide_json")
         with gr.Row():
-          # json_output = gr.Button(value="Save JSON")
+          json_output = gr.Button(value="Save JSON")
           png_output = gr.Button(value="Save PNG")
           send_output = gr.Button(value="Send to ControlNet")
 
@@ -88,7 +88,7 @@ def on_ui_tabs():
         "candidate": candidate2li(candidate),
         "subset": subset2li(subset)
       }
-
+      
       return result
 
 
@@ -101,6 +101,8 @@ def on_ui_tabs():
     png_input_area.change(estimate, [png_input_area], [jsonbox])
     send_output.click(None, [], None, _js="sendImage")
     reset_btn.click(None, [], None, _js="resetCanvas")
+    json_input.click(None, None, [width, height], _js="loadJSON")
+    json_output.click(None, None, None, _js="saveJSON")
 
   return [(openpose_editor, "OpenPose Editor", "openpose_editor")]
 

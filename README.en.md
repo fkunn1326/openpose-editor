@@ -25,3 +25,16 @@ This can:
 3. In "URL for extension's git repository" enter this extension, https://github.com/fkunn1326/openpose-editor.git
 4. Click "Install"
 5. Restart WebUI
+
+## Attention
+
+Do not select anything for the Preprocessor in ControlNet.
+
+
+## Fix Error
+> urllib.error.URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:997)>
+
+Run
+```
+/Applications/Python\ $version /Install\ Certificates.command
+```
