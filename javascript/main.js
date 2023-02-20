@@ -493,6 +493,18 @@ function sendImage(){
                 input.dispatchEvent(event);
             }
         })
+        gradioApp().querySelector("#img2img_script_container").querySelectorAll("span.transition").forEach((elem) => {
+            if (elem.previousElementSibling.textContent === "ControlNet"){
+                elem.className.includes("rotate-90") && elem.parentElement.click();
+                const input = elem.parentElement.parentElement.querySelector("input[type='file']");
+                const button = elem.parentElement.parentElement.querySelector("button[aria-label='Clear']")
+                button && button.click();
+                input.value = "";
+                input.files = list;
+                const event = new Event('change', { 'bubbles': true, "composed": true });
+                input.dispatchEvent(event);
+            }
+        })
     });
     openpose_editor_canvas.getObjects("image").forEach((img) => {
         img.set({
