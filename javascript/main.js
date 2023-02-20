@@ -335,6 +335,11 @@ function initCanvas(elem){
                 canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
                     opacity: 0.5
                 });
+                const img = new Image();
+                img.onload = function() {
+                    resizeCanvas(this.width, this.height)
+                }
+                img.src = dataUri;
             }
             fileReader.readAsDataURL(gradioApp().querySelector("#openpose_editor_input").querySelector("input").files[0]);
         } catch(e){console.log(e)}
@@ -446,6 +451,11 @@ function addBackground(){
             canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
                 opacity: 0.5
             });
+            const img = new Image();
+            img.onload = function() {
+                resizeCanvas(this.width, this.height)
+            }
+            img.src = dataUri;
 		}
 		fileReader.readAsDataURL(file);
     })
