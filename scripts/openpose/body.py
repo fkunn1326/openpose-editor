@@ -28,8 +28,8 @@ class Body(object):
         boxsize = 368
         stride = 8
         padValue = 128
-        thre1 = 0.1
-        thre2 = 0.05
+        threthold1 = 0.1
+        threthold2 = 0.05
         multiplier = [x * boxsize / oriImg.shape[0] for x in scale_search]
         heatmap_avg = np.zeros((oriImg.shape[0], oriImg.shape[1], 19))
         paf_avg = np.zeros((oriImg.shape[0], oriImg.shape[1], 38))
@@ -83,7 +83,7 @@ class Body(object):
             map_down[:, :-1] = one_heatmap[:, 1:]
 
             peaks_binary = np.logical_and.reduce(
-                (one_heatmap >= map_left, one_heatmap >= map_right, one_heatmap >= map_up, one_heatmap >= map_down, one_heatmap > thre1))
+                (one_heatmap >= map_left, one_heatmap >= map_right, one_heatmap >= map_up, one_heatmap >= map_down, one_heatmap > threthold1))
             peaks = list(zip(np.nonzero(peaks_binary)[1], np.nonzero(peaks_binary)[0]))  # note reverse
             peaks_with_score = [x + (map_ori[x[1], x[0]],) for x in peaks]
             peak_id = range(peak_counter, peak_counter + len(peaks))
@@ -132,7 +132,7 @@ class Body(object):
                         score_midpts = np.multiply(vec_x, vec[0]) + np.multiply(vec_y, vec[1])
                         score_with_dist_prior = sum(score_midpts) / len(score_midpts) + min(
                             0.5 * oriImg.shape[0] / norm - 1, 0)
-                        criterion1 = len(np.nonzero(score_midpts > thre2)[0]) > 0.8 * len(score_midpts)
+                        criterion1 = len(np.nonzero(score_midpts > threthold2)[0]) > 0.8 * len(score_midpts)
                         criterion2 = score_with_dist_prior > 0
                         if criterion1 and criterion2:
                             connection_candidate.append(
