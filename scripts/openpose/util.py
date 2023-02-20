@@ -30,10 +30,10 @@ def padRightDownCorner(img, stride, padValue):
 
 # transfer caffe model to pytorch which will match the layer name
 def transfer(model, model_weights):
-    transfered_model_weights = {}
+    transferred_model_weights = {}
     for weights_name in model.state_dict().keys():
-        transfered_model_weights[weights_name] = model_weights['.'.join(weights_name.split('.')[1:])]
-    return transfered_model_weights
+        transferred_model_weights[weights_name] = model_weights['.'.join(weights_name.split('.')[1:])]
+    return transferred_model_weights
 
 # draw the body keypoint and lims
 def draw_bodypose(canvas, candidate, subset):
@@ -72,7 +72,7 @@ def draw_bodypose(canvas, candidate, subset):
     return canvas
 
 
-# image drawed by opencv is not good.
+# image drawn by opencv is not good.
 def draw_handpose(canvas, all_hand_peaks, show_number=False):
     edges = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [0, 9], [9, 10], \
              [10, 11], [11, 12], [0, 13], [13, 14], [14, 15], [15, 16], [0, 17], [17, 18], [18, 19], [19, 20]]
