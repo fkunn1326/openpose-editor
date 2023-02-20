@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import torch
 from torchvision import transforms
+from modules import extensions
 
 from . import util
 from .model import bodypose_model
@@ -210,7 +211,8 @@ class Body(object):
         return candidate, subset
 
 if __name__ == "__main__":
-    body_estimation = Body('../extensions/sd-webui-controlnet/annotator/openpose/body_pose_model.pth')
+    modeldir = os.path.join(extensions.extensions_dir, "sd-webui-controlnet", "annotator", "openpose")
+    body_estimation = Body(os.path.join(modeldir, "body_pose_model.pth"))
 
     test_image = '../images/ski.jpg'
     oriImg = cv2.imread(test_image)  # B,G,R order
