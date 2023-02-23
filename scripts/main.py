@@ -69,7 +69,8 @@ def on_ui_tabs():
         with gr.Row():
           json_output = gr.Button(value="Save JSON")
           png_output = gr.Button(value="Save PNG")
-          send_output = gr.Button(value="Send to ControlNet")
+          send_t2t = gr.Button(value="Send to txt2img")
+          send_i2i = gr.Button(value="Send to img2img")
 
     def estimate(img):
       global body_estimation
@@ -97,7 +98,8 @@ def on_ui_tabs():
     png_input.click(None, [], None, _js="detectImage")
     add.click(None, [], None, _js="addPose")
     png_input_area.change(estimate, [png_input_area], [jsonbox])
-    send_output.click(None, [], None, _js="sendImage")
+    send_t2t.click(None, [], None, _js="() => {sendImage('txt2img')}")
+    send_i2i.click(None, [], None, _js="() => {sendImage('img2img')}")
     reset_btn.click(None, [], None, _js="resetCanvas")
     json_input.click(None, None, [width, height], _js="loadJSON")
     json_output.click(None, None, None, _js="saveJSON")

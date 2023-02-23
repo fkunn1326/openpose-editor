@@ -5,7 +5,7 @@ fabric.Object.prototype.cornerSize = 10;
 fabric.Object.prototype.lockRotation = true;
 
 let count = 0;
-let executed = false;
+let executed_openpose_editor = false;
 
 let lockMode = false;
 const undo_history = [];
@@ -383,7 +383,7 @@ function savePNG(){
     })
     if (openpose_editor_canvas.backgroundImage) openpose_editor_canvas.backgroundImage.opacity = 0.5
     openpose_editor_canvas.renderAll()
-    return
+    return openpose_editor_canvas
 }
 
 function saveJSON(){
@@ -405,6 +405,7 @@ function saveJSON(){
     a.download = "pose.json";
     a.click();
     URL.revokeObjectURL(a.href);
+    return json
 }
 
 function loadJSON(){
@@ -460,13 +461,15 @@ function addBackground(){
 		fileReader.readAsDataURL(file);
     })
     input.click()
+    return
 }
 
 function detectImage(){
     gradioApp().querySelector("#openpose_editor_input").querySelector("input").click()
+    return
 }
 
-function sendImage(){
+function sendImage(type){
     openpose_editor_canvas.getObjects("image").forEach((img) => {
         img.set({
             opacity: 0
@@ -480,20 +483,13 @@ function sendImage(){
         const dt = new DataTransfer();
         dt.items.add(file);
         const list = dt.files
-        gradioApp().querySelector("#txt2img_script_container").querySelectorAll("span.transition").forEach((elem) => {
-            if (elem.previousElementSibling.textContent === "ControlNet"){
-                switch_to_txt2img()
-                elem.className.includes("rotate-90") && elem.parentElement.click();
-                const input = elem.parentElement.parentElement.querySelector("input[type='file']");
-                const button = elem.parentElement.parentElement.querySelector("button[aria-label='Clear']")
-                button && button.click();
-                input.value = "";
-                input.files = list;
-                const event = new Event('change', { 'bubbles': true, "composed": true });
-                input.dispatchEvent(event);
-            }
-        })
-        gradioApp().querySelector("#img2img_script_container").querySelectorAll("span.transition").forEach((elem) => {
+        const selector = type === "txt2img" ? "#txt2img_script_container" : "#img2img_script_container"
+        if (type === "txt2img"){
+            switch_to_txt2img()
+        }else if(type === "img2img"){
+            switch_to_img2img()
+        }
+        gradioApp().querySelector(selector).querySelectorAll("span.transition").forEach((elem) => {
             if (elem.previousElementSibling.textContent === "ControlNet"){
                 elem.className.includes("rotate-90") && elem.parentElement.click();
                 const input = elem.parentElement.parentElement.querySelector("input[type='file']");
@@ -517,8 +513,8 @@ function sendImage(){
 
 window.addEventListener('DOMContentLoaded', () => {
     const observer = new MutationObserver((m) => {
-        if(!executed && gradioApp().querySelector('#openpose_editor_canvas')){
-            executed = true;
+        if(!executed_openpose_editor && gradioApp().querySelector('#openpose_editor_canvas')){
+            executed_openpose_editor = true;
             initCanvas(gradioApp().querySelector('#openpose_editor_canvas'))
             // gradioApp().querySelectorAll("#tabs > div > button").forEach((elem) => {
             //     if (elem.innerText === "OpenPose Editor") elem.click()
