@@ -11,6 +11,8 @@ let lockMode = false;
 const undo_history = [];
 const redo_history = [];
 
+let target_controlnet_index = 0;
+
 coco_body_keypoints = [
     "nose",
     "neck",
@@ -489,8 +491,12 @@ function sendImage(type){
         }else if(type === "img2img"){
             switch_to_img2img()
         }
+
         gradioApp().querySelector(selector).querySelectorAll("span.transition").forEach((elem) => {
-            if (elem.previousElementSibling.textContent === "ControlNet"){
+            const label = elem.previousElementSibling.textContent;
+
+            if ((label === `ControlNet - ${target_controlnet_index}`)
+                    || ((target_controlnet_index === 0) && (label === "ControlNet"))) {
                 elem.className.includes("rotate-90") && elem.parentElement.click();
                 const input = elem.parentElement.parentElement.querySelector("input[type='file']");
                 const button = elem.parentElement.parentElement.querySelector("button[aria-label='Clear']")
@@ -509,6 +515,10 @@ function sendImage(type){
     })
     if (openpose_editor_canvas.backgroundImage) openpose_editor_canvas.backgroundImage.opacity = 0.5
     openpose_editor_canvas.renderAll()
+}
+
+function updateTargetIndex(index) {
+    target_controlnet_index = index;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
