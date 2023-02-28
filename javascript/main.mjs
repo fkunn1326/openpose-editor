@@ -2,22 +2,57 @@ import * as THREE from './three.mjs';
 import { GLTFLoader } from './GLTFLoader.mjs'
 import { VRMLoaderPlugin, VRMUtils } from './three-vrm.mjs';
 import { OrbitControls } from './OrbitControls.mjs'
-import { IK, IKChain, IKJoint } from './three-ik.mjs'
+import { TransformControls } from './TransformControls.mjs'
 import { DragControls } from './DragControls.mjs'
+import { VrmIK } from './vrm-ik.mjs';
+
+/*
+Openpose Editorの仕様
+
+# カメラ制御（OrbitControls）
+
+PC
+- ジョイント以外がカメラ制御になる
+- 右ドラッグ操作で回転
+- Shift + ドラッグ操作で移動
+- スクロール操作でズーム
+
+スマホ
+- 1touchは回転
+- 2touchはズーム
+
+# 人間の操作
+
+全般
+- IKはON/OFF可能
+
+2Dモード
+- 3Dモデルを2Dで操作する、IKは2D-IKになる
+- Z軸は基本的に0
+- 今までのように伸びたりはしない（3Dモデルだから）
+- ジョイントをドラッグ操作する
+
+3Dモード
+- カメラ制御を用いながら3Dで編集する
+- ジョイントをドラッグ操作する
+
+あとgithubに異型、奇形に関するissueがいくつかあるんだけどどう対応しようか :scream:
+*/
 
 class OpenposeEditor {
     _canvas = undefined;
     _renderer = undefined;
     _scene = undefined;
     _camera = undefined;
-    _controls = undefined;
+    _control = undefined;
     _vrm = undefined;
+    _vrmIK = undefined;
 
     constructor() {
         // Setup viewer
 
         // canvas
-        this._canvas = gradioApp().querySelector("canvas#openpose_editor_canvas")
+        this._canvas = gradioApp().querySelector("canvas#openpose_editor_canvas");
 
         // scene
         this._scene = new THREE.Scene();
@@ -31,10 +66,10 @@ class OpenposeEditor {
         this._camera.rotation.set(0, Math.PI, 0)
 
         // camera controls
-        this._controls = new OrbitControls( this._camera, this._canvas);
-        this._controls.screenSpacePanning = true;
-        this._controls.target.set( 0.0, 0.8, 0.0 );
-        this._controls.update();
+        this._control = new OrbitControls( this._camera, this._canvas);
+        this._control.screenSpacePanning = true;
+        this._control.target.set( 0.0, 0.8, 0.0 );
+        this._control.update();
 
         // renderer
         this._renderer = new THREE.WebGLRenderer({
@@ -51,15 +86,6 @@ class OpenposeEditor {
         const light = new THREE.AmbientLight(0xFFFFFF, 1.0);
         this._scene.add(light); 
 
-        const normalPose = (vrm) => {
-            console.log(vrm.humanoid.getBoneNode('leftUpperArm'))
-            const leftUpperArm = vrm.humanoid.getBoneNode('leftUpperArm')
-            leftUpperArm.rotateZ(1.2)
-            // leftUpperArm.position.set(1, 1, 1)
-            const rightUpperArm = vrm.humanoid.getBoneNode('rightUpperArm')
-            rightUpperArm.rotateZ(-1.2)
-        }
-
         loader.crossOrigin = 'anonymous';
         loader.register((parser) => {
             return new VRMLoaderPlugin(parser);
@@ -72,8 +98,32 @@ class OpenposeEditor {
                 const vrm = gltf.userData.vrm;
                 VRMUtils.removeUnnecessaryJoints(gltf.scene);
                 this._vrm = vrm
+
+                const normalPose = (vrm) => {
+                    const leftUpperArm = vrm.humanoid.getBoneNode('leftUpperArm')
+                    leftUpperArm.rotateZ(1.2)
+                    const rightUpperArm = vrm.humanoid.getBoneNode('rightUpperArm')
+                    rightUpperArm.rotateZ(-1.2)
+                }
                 
                 normalPose(vrm)
+
+                // IK
+                this._vrmIK = new VrmIK(vrm);
+
+                // controler
+                console.log(this._vrmIK.ikChains)
+
+                this._vrmIK.ikChains.forEach(chain => {
+                    const transCtrl = new TransformControls(this._camera, this._canvas);
+                    transCtrl.size = 0.5;
+                    transCtrl.attach(chain.goal);
+                    transCtrl.addEventListener('dragging-changed', event => {
+                        this._control.enabled = !event.value;
+                    });
+                    this._vrm.scene.add(transCtrl);
+                });
+                
                 this._scene.add(vrm.scene);
             },
             
@@ -106,7 +156,7 @@ class OpenposeEditor {
     }
 
     get orbitControl(){
-        return this._controls
+        return this._control
     }
 
     get vrm(){
@@ -114,6 +164,7 @@ class OpenposeEditor {
     }
 
     update(){
+        if (!!this._vrmIK) this._vrmIK.solve();
         this._renderer.render(this._scene, this._camera);
     }
 }
@@ -121,12 +172,12 @@ class OpenposeEditor {
 window.addEventListener('DOMContentLoaded', () => {
     let exexuted = false;
 
-    function setup(){
+    const setup = () => {
         // setup editor
         window.openpose_editor = new OpenposeEditor()
 
         // update loop
-        function update(){
+        const update = () => {
             requestAnimationFrame(update);
             window.openpose_editor.update()
         }
