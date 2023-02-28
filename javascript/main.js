@@ -495,8 +495,8 @@ function sendImage(type){
         gradioApp().querySelector(selector).querySelectorAll("span.transition").forEach((elem) => {
             const label = elem.previousElementSibling.textContent;
 
-            if ((label === `ControlNet - ${target_controlnet_index}`)
-                    || ((target_controlnet_index === 0) && (label === "ControlNet"))) {
+	    if ((label === `ControlNet - ${target_controlnet_index}`) || /\(?ControlNet\)?\s+-\s+\d/i.test(label)
+                    || ((target_controlnet_index === 0) && (label.includes("ControlNet")))) {
                 elem.className.includes("rotate-90") && elem.parentElement.click();
                 const input = elem.parentElement.parentElement.querySelector("input[type='file']");
                 const button = elem.parentElement.parentElement.querySelector("button[aria-label='Clear']")
