@@ -496,7 +496,7 @@ function sendImage(type){
             const label = elem.previousElementSibling.textContent;
 
 	    if ((label === `ControlNet - ${target_controlnet_index}`) || /\(?ControlNet\)?\s+-\s+\d/i.test(label)
-                    || ((target_controlnet_index === 0) && (label.includes("ControlNet")))) {
+                    || ((target_controlnet_index === 0) && (label.includes("ControlNet") && !label.includes("M2M")))) {
                 elem.className.includes("rotate-90") && elem.parentElement.click();
                 const input = elem.parentElement.parentElement.querySelector("input[type='file']");
                 const button = elem.parentElement.parentElement.querySelector("button[aria-label='Clear']")
