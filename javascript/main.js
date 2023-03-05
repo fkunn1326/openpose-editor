@@ -413,7 +413,6 @@ function saveJSON(){
 function loadJSON(){
     const input = document.createElement("input");
     input.type = "file"
-    input.click()
     input.addEventListener("change", function(e){
         const file = e.target.files[0];
 		var fileReader = new FileReader();
