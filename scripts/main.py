@@ -1,4 +1,5 @@
 import os
+import json
 import numpy as np
 import cv2
 
@@ -12,6 +13,14 @@ from basicsr.utils.download_util import load_file_from_url
 from scripts.openpose.body import Body
 
 body_estimation = None
+presets_file = os.path.join(scripts.basedir(), "presets.json")
+presets = {}
+
+try: 
+  with open(presets_file) as file:
+    presets = json.load(file)
+except FileNotFoundError:
+  pass
 
 def pil2cv(in_image):
   out_image = np.array(in_image, dtype=np.uint8)
@@ -59,13 +68,17 @@ def on_ui_tabs():
           reset_btn = gr.Button(value="Reset")
           json_input = gr.Button(value="Load from JSON")
           png_input = gr.Button(value="Detect from image")
-          png_input_area = gr.Image(label="Detect from image", elem_id="openpose_editor_input")
+          png_input_area = gr.Image(label="Detect from image", elem_id="openpose_editor_input", visible=False)
           bg_input = gr.Button(value="Add Background image")
+        with gr.Row():
+          preset_list = gr.Dropdown(label="Presets", choices=sorted(presets.keys()), interactive=True)
+          preset_load = gr.Button(value="Load Preset")
+          preset_save = gr.Button(value="Save Preset")
 
       with gr.Column():
         # gradioooooo...
         canvas = gr.HTML('<canvas id="openpose_editor_canvas" width="512" height="512" style="margin: 0.25rem; border-radius: 0.25rem; border: 0.5px solid"></canvas>')
-        jsonbox = gr.Text(label="json", elem_id="hide_json")
+        jsonbox = gr.Text(label="json", elem_id="hide_json", visible=False)
         with gr.Row():
           json_output = gr.Button(value="Save JSON")
           png_output = gr.Button(value="Save PNG")
@@ -91,7 +104,20 @@ def on_ui_tabs():
       
       return result
 
+    def savePreset(name, data):
+      if name:
+        presets[name] = json.loads(data)
+        with open(presets_file, "w") as file:
+          json.dump(presets, file)
+        return gr.update(choices=sorted(presets.keys()), value=name), json.dumps(data)
+      return gr.update(), gr.update()
 
+    def loadPreset(name):
+      if name in presets:
+        return presets[name]
+
+    dummy_component = gr.Label(visible=False)
+    preset = gr.Text(visible=False)
     width.change(None, [width, height], None, _js="(w, h) => {resizeCanvas(w, h)}")
     height.change(None, [width, height], None, _js="(w, h) => {resizeCanvas(w, h)}")
     png_output.click(None, [], None, _js="savePNG")
@@ -105,6 +131,9 @@ def on_ui_tabs():
     reset_btn.click(None, [], None, _js="resetCanvas")
     json_input.click(None, None, [width, height], _js="loadJSON")
     json_output.click(None, None, None, _js="saveJSON")
+    preset_save.click(savePreset, [dummy_component, dummy_component], [preset_list, preset], _js="savePreset")
+    preset_load.click(None, preset, [width, height], _js="loadPreset")
+    preset_list.change(lambda selected: json.dumps(presets[selected]), preset_list, preset)
 
   return [(openpose_editor, "OpenPose Editor", "openpose_editor")]
 
