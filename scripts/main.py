@@ -7,6 +7,7 @@ import gradio as gr
 import modules.scripts as scripts
 from modules import script_callbacks
 from modules.shared import opts
+from modules.paths import models_path
 
 from basicsr.utils.download_util import load_file_from_url
 
@@ -78,10 +79,11 @@ def on_ui_tabs():
       global body_estimation
 
       if body_estimation is None:
-        if not os.path.isfile((os.path.join(scripts.basedir(), "models/body_pose_model.pth"))):
+        model_path = os.path.join(models_path, "openpose", "body_pose_model.pth")
+        if not os.path.isfile(model_path):
           body_model_path = "https://huggingface.co/lllyasviel/ControlNet/resolve/main/annotator/ckpts/body_pose_model.pth"
-          load_file_from_url(body_model_path, model_dir=os.path.join(scripts.basedir(), "models"))
-        body_estimation = Body('models/body_pose_model.pth')
+          load_file_from_url(body_model_path, model_dir=os.path.join(models_path, "openpose"))
+        body_estimation = Body(model_path)
         
       candidate, subset = body_estimation(pil2cv(img))
 
