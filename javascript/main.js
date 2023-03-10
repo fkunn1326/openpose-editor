@@ -11,8 +11,6 @@ let lockMode = false;
 const undo_history = [];
 const redo_history = [];
 
-let target_controlnet_index = 0;
-
 coco_body_keypoints = [
     "nose",
     "neck",
@@ -470,7 +468,7 @@ function detectImage(){
     return
 }
 
-function sendImage(type){
+function sendImage(type, index){
     openpose_editor_canvas.getObjects("image").forEach((img) => {
         img.set({
             opacity: 0
@@ -494,8 +492,8 @@ function sendImage(type){
         gradioApp().querySelector(selector).querySelectorAll("span.transition").forEach((elem) => {
             const label = elem.previousElementSibling.textContent;
 
-	    if ((label === `ControlNet - ${target_controlnet_index}`) || /\(?ControlNet\)?\s+-\s+\d/i.test(label)
-                    || ((target_controlnet_index === 0) && (label.includes("ControlNet") && !label.includes("M2M")))) {
+	    if ((label === `ControlNet - ${index}`) || /\(?ControlNet\)?\s+-\s+\d/i.test(label)
+                    || ((index == 0) && (label.includes("ControlNet") && !label.includes("M2M")))) {
                 elem.className.includes("rotate-90") && elem.parentElement.click();
                 const input = elem.parentElement.parentElement.querySelector("input[type='file']");
                 const button = elem.parentElement.parentElement.querySelector("button[aria-label='Clear']")
@@ -514,10 +512,6 @@ function sendImage(type){
     })
     if (openpose_editor_canvas.backgroundImage) openpose_editor_canvas.backgroundImage.opacity = 0.5
     openpose_editor_canvas.renderAll()
-}
-
-function updateTargetIndex(index) {
-    target_controlnet_index = index;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
