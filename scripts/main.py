@@ -6,6 +6,7 @@ import gradio as gr
 
 import modules.scripts as scripts
 from modules import script_callbacks
+from modules.shared import opts
 from modules.paths import models_path
 
 from basicsr.utils.download_util import load_file_from_url
@@ -72,7 +73,7 @@ def on_ui_tabs():
           png_output = gr.Button(value="Save PNG")
           send_t2t = gr.Button(value="Send to txt2img")
           send_i2i = gr.Button(value="Send to img2img")
-          select_target_index = gr.Dropdown([str(i) for i in range(10)], label="Send to", value="0", interactive=True)
+          select_target_index = gr.Dropdown([str(i) for i in range(opts.control_net_max_models_num)], label="Send to", value="0", interactive=True, visible=(opts.control_net_max_models_num > 1))
 
     def estimate(img):
       global body_estimation
@@ -101,11 +102,10 @@ def on_ui_tabs():
     png_input.click(None, [], None, _js="detectImage")
     add.click(None, [], None, _js="addPose")
     png_input_area.change(estimate, [png_input_area], [jsonbox])
-    send_t2t.click(None, [], None, _js="() => {sendImage('txt2img')}")
-    send_i2i.click(None, [], None, _js="() => {sendImage('img2img')}")
-    select_target_index.change(None, [select_target_index], None, _js="(i) => {updateTargetIndex(parseInt(i, 10))}")
+    send_t2t.click(None, select_target_index, None, _js="(i) => {sendImage('txt2img', i)}")
+    send_i2i.click(None, select_target_index, None, _js="(i) => {sendImage('img2img', i)}")
     reset_btn.click(None, [], None, _js="resetCanvas")
-    json_input.click(None, None, [width, height], _js="loadJSON")
+    json_input.click(None, json_input, [width, height], _js="loadJSON")
     json_output.click(None, None, None, _js="saveJSON")
 
   return [(openpose_editor, "OpenPose Editor", "openpose_editor")]
