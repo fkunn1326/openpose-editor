@@ -489,9 +489,9 @@ function sendImage(type, index){
             switch_to_img2img()
         }
 
-        const accordian = gradioApp().querySelector(selector).querySelector("#controlnet .transition");
-        if (accordian.classList.contains("rotate-90")) {
-            accordian.click()
+        const accordion = gradioApp().querySelector(selector).querySelector("#controlnet .transition");
+        if (accordion.classList.contains("rotate-90")) {
+            accordion.click()
         }
         
         const tabs = gradioApp().querySelector(selector).querySelectorAll("#controlnet > div:nth-child(2) > .tabs > .tabitem, #controlnet > div:nth-child(2) > div:not(.tabs)")
