@@ -72,7 +72,7 @@ def on_ui_tabs():
           png_output = gr.Button(value="Save PNG")
           send_t2t = gr.Button(value="Send to txt2img")
           send_i2i = gr.Button(value="Send to img2img")
-          select_target_index = gr.Dropdown([str(i) for i in range(opts.control_net_max_models_num)], label="Send to", value="0", interactive=True)
+          select_target_index = gr.Dropdown([str(i) for i in range(opts.control_net_max_models_num)], label="Send to", value="0", interactive=True, visible=(opts.control_net_max_models_num > 1))
 
     def estimate(img):
       global body_estimation
