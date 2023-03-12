@@ -464,7 +464,9 @@ function addBackground(){
 }
 
 function detectImage(){
-    gradioApp().querySelector("#openpose_editor_input").querySelector("input").click()
+    const input = gradioApp().querySelector("#openpose_editor_input").querySelector("input");
+    input.accept = "image/*";
+    input.click();
     return
 }
 
