@@ -74,7 +74,7 @@ def on_ui_tabs():
           send_t2t = gr.Button(value="Send to txt2img")
           send_i2i = gr.Button(value="Send to img2img")
           control_net_max_models_num = 0
-          if (hasattr(opts, 'control_net_max_models_num')):
+          if hasattr(opts, 'control_net_max_models_num'):
             control_net_max_models_num = opts.control_net_max_models_num
           select_target_index = gr.Dropdown([str(i) for i in range(control_net_max_models_num)], label="Send to", value="0", interactive=True, visible=(control_net_max_models_num > 1))
 
