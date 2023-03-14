@@ -412,19 +412,20 @@ function saveJSON(){
     URL.revokeObjectURL(a.href);
 }
 
-function loadJSON(){
-    const input = document.createElement("input");
-    input.type = "file"
-    input.accept = "application/json"
-    input.addEventListener("change", function(e){
-        const file = e.target.files[0];
-		var fileReader = new FileReader();
-		fileReader.onload = function() {
-            loadPreset(this.result)
-		}
-		fileReader.readAsText(file);
-    })
-    input.click()
+async function loadJSON(file){
+    const response = await fetch(file.data)
+    const json = await response.json();
+    if (json["width"] && json["height"]) {
+        resizeCanvas(json["width"], json["height"])
+    }else{
+        throw new Error('width, height is invalid');
+    }
+    if (json["keypoints"].length % 18 === 0) {
+        setPose(json["keypoints"])
+    }else{
+        throw new Error('keypoints is invalid')
+    }
+    return [json["width"], json["height"]]
 }
 
 function savePreset(){
@@ -453,29 +454,14 @@ function loadPreset(json){
     }
 }
 
-function addBackground(){
-    const input = document.createElement("input");
-    input.type = "file"
-    input.accept = "image/*"
-    input.addEventListener("change", function(e){
-        const canvas = openpose_editor_canvas
-        const file = e.target.files[0];
-		var fileReader = new FileReader();
-		fileReader.onload = function() {
-			var dataUri = this.result;
-            canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
-                opacity: 0.5
-            });
-            const img = new Image();
-            img.onload = function() {
-                resizeCanvas(this.width, this.height)
-            }
-            img.src = dataUri;
-		}
-		fileReader.readAsDataURL(file);
-    })
-    input.click()
-    return
+async function addBackground(file){
+    openpose_editor_canvas.setBackgroundImage(file.data, openpose_editor_canvas.renderAll.bind(openpose_editor_canvas), {
+        opacity: 0.5
+    });
+    const img = new Image();
+    await (img.src = file.data);
+    resizeCanvas(this.width, this.height)
+    return [img.width, img.height]
 }
 
 function detectImage(){
