@@ -310,7 +310,7 @@ function initCanvas(elem){
     const json_observer = new MutationObserver((m) => {
         if(gradioApp().querySelector('#tab_openpose_editor').style.display!=='block') return;
         try {
-            const raw = gradioApp().querySelector("#hide_json").querySelector("textarea").value.replaceAll("'", '"')
+            const raw = gradioApp().querySelector("#jsonbox").querySelector("textarea").value.replaceAll("'", '"')
             const json = JSON.parse(raw)
 
             let candidate = json["candidate"]
@@ -327,24 +327,12 @@ function initCanvas(elem){
                 }
             }
 
+            const bgimage = openpose_editor_canvas.backgroundImage
             setPose(li);
-
-            const fileReader = new FileReader();
-            fileReader.onload = function() {
-                const dataUri = this.result;
-                canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
-                    opacity: 0.5
-                });
-                const img = new Image();
-                img.onload = function() {
-                    resizeCanvas(this.width, this.height)
-                }
-                img.src = dataUri;
-            }
-            fileReader.readAsDataURL(gradioApp().querySelector("#openpose_editor_input").querySelector("input").files[0]);
+            openpose_editor_canvas.backgroundImage = bgimage
         } catch(e){console.log(e)}
     })
-    json_observer.observe(gradioApp().querySelector("#hide_json"), { "attributes": true })
+    json_observer.observe(gradioApp().querySelector("#jsonbox"), { "attributes": true })
 
     // document.addEventListener('keydown', function(e) {
     //     if (e.key !== undefined) {

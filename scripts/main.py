@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import numpy as np
 import cv2
@@ -13,6 +14,8 @@ from modules.paths import models_path
 from basicsr.utils.download_util import load_file_from_url
 
 from scripts.openpose.body import Body
+
+from PIL import Image
 
 body_estimation = None
 presets_file = os.path.join(scripts.basedir(), "presets.json")
@@ -69,7 +72,7 @@ def on_ui_tabs():
         with gr.Row():
           reset_btn = gr.Button(value="Reset")
           json_input = gr.UploadButton(label="Load from JSON", file_types=[".json"])
-          png_input = gr.Button(value="Detect from image")
+          png_input = gr.UploadButton(label="Detect from image", file_types=["image"], type="bytes")
           png_input_area = gr.Image(label="Detect from image", elem_id="openpose_editor_input", visible=False)
           bg_input = gr.UploadButton(label="Add Background image", file_types=["image"])
         with gr.Row():
@@ -80,7 +83,7 @@ def on_ui_tabs():
       with gr.Column():
         # gradioooooo...
         canvas = gr.HTML('<canvas id="openpose_editor_canvas" width="512" height="512" style="margin: 0.25rem; border-radius: 0.25rem; border: 0.5px solid"></canvas>')
-        jsonbox = gr.Text(label="json", elem_id="hide_json", visible=False)
+        jsonbox = gr.Text(label="json", elem_id="jsonbox", visible=False)
         with gr.Row():
           json_output = gr.Button(value="Save JSON")
           png_output = gr.Button(value="Save PNG")
@@ -89,7 +92,7 @@ def on_ui_tabs():
           control_net_max_models_num = getattr(opts, 'control_net_max_models_num', 0)
           select_target_index = gr.Dropdown([str(i) for i in range(control_net_max_models_num)], label="Send to", value="0", interactive=True, visible=(control_net_max_models_num > 1))
 
-    def estimate(img):
+    def estimate(file):
       global body_estimation
 
       if body_estimation is None:
@@ -99,11 +102,13 @@ def on_ui_tabs():
           load_file_from_url(body_model_path, model_dir=os.path.join(models_path, "openpose"))
         body_estimation = Body(model_path)
         
+      stream = io.BytesIO(file)
+      img = Image.open(stream)
       candidate, subset = body_estimation(pil2cv(img))
 
       result = {
         "candidate": candidate2li(candidate),
-        "subset": subset2li(subset)
+        "subset": subset2li(subset),
       }
       
       return result
@@ -126,7 +131,8 @@ def on_ui_tabs():
     height.change(None, [width, height], None, _js="(w, h) => {resizeCanvas(w, h)}")
     png_output.click(None, [], None, _js="savePNG")
     bg_input.upload(None, [bg_input], [width, height], _js="addBackground")
-    png_input.click(None, [], None, _js="detectImage")
+    png_input.upload(estimate, png_input, [jsonbox])
+    png_input.upload(None, png_input, [width, height], _js="addBackground")
     add.click(None, [], None, _js="addPose")
     png_input_area.change(estimate, [png_input_area], [jsonbox])
     send_t2t.click(None, select_target_index, None, _js="(i) => {sendImage('txt2img', i)}")
