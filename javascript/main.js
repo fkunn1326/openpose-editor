@@ -386,7 +386,7 @@ function savePNG(){
     return openpose_editor_canvas
 }
 
-function saveJSON(){
+function serializeJSON(){
     const canvas = openpose_editor_canvas
     const json = JSON.stringify({
         "width": canvas.width,
@@ -397,45 +397,60 @@ function saveJSON(){
             return [Math.round(item.left), Math.round(item.top)]
         })
     }, null, 4)
+    return json;
+}
+
+function saveJSON(){
+    const json = serializeJSON()
     const blob = new Blob([json], {
-        type: 'text/plain'
+        type: "application/json"
     });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "pose.json";
     a.click();
     URL.revokeObjectURL(a.href);
-    return json
 }
 
 function loadJSON(){
     const input = document.createElement("input");
     input.type = "file"
+    input.accept = "application/json"
     input.addEventListener("change", function(e){
         const file = e.target.files[0];
 		var fileReader = new FileReader();
 		fileReader.onload = function() {
-            try {
-                const json = JSON.parse(this.result)
-                if (json["width"] && json["height"]) {
-                    resizeCanvas(json["width"], json["height"])
-                }else{
-                    throw new Error('width, height is invalid');
-                }
-                if (json["keypoints"].length % 18 === 0) {
-                    setPose(json["keypoints"])
-                }else{
-                    throw new Error('keypoints is invalid')
-                }
-                return [json["width"], json["height"]]
-            }catch(e){
-                console.error(e)
-                alert("Invalid JSON")
-            }
+            loadPreset(this.result)
 		}
 		fileReader.readAsText(file);
     })
     input.click()
+}
+
+function savePreset(){
+    var name = prompt("Preset Name")
+    const json = serializeJSON()
+    return [name, json]
+}
+
+function loadPreset(json){
+    try {
+        json = JSON.parse(json)
+        if (json["width"] && json["height"]) {
+            resizeCanvas(json["width"], json["height"])
+        }else{
+            throw new Error('width, height is invalid');
+        }
+        if (json["keypoints"].length % 18 === 0) {
+            setPose(json["keypoints"])
+        }else{
+            throw new Error('keypoints is invalid')
+        }
+        return [json["width"], json["height"]]
+    }catch(e){
+        console.error(e)
+        alert("Invalid JSON")
+    }
 }
 
 function addBackground(){
