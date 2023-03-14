@@ -62,9 +62,7 @@ function gradioApp() {
     return !!gradioShadowRoot ? gradioShadowRoot : document;
 }
 
-function calcResolution(resolution){
-    const width = resolution[0]
-    const height = resolution[1]
+function calcResolution(width, height){
     const viewportWidth = window.innerWidth / 2.25;
     const viewportHeight = window.innerHeight * 0.75;
     const ratio = Math.min(viewportWidth / width, viewportHeight / height);
@@ -75,7 +73,7 @@ function resizeCanvas(width, height){
     const elem = openpose_editor_elem;
     const canvas = openpose_editor_canvas;
 
-    let resolution = calcResolution([width, height])
+    let resolution = calcResolution(width, height)
 
     canvas.setWidth(width);
     canvas.setHeight(height);
