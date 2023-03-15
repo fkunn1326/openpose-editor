@@ -73,7 +73,6 @@ def on_ui_tabs():
           reset_btn = gr.Button(value="Reset")
           json_input = gr.UploadButton(label="Load from JSON", file_types=[".json"])
           png_input = gr.UploadButton(label="Detect from image", file_types=["image"], type="bytes")
-          png_input_area = gr.Image(label="Detect from image", elem_id="openpose_editor_input", visible=False)
           bg_input = gr.UploadButton(label="Add Background image", file_types=["image"])
         with gr.Row():
           preset_list = gr.Dropdown(label="Presets", choices=sorted(presets.keys()), interactive=True)
@@ -134,7 +133,6 @@ def on_ui_tabs():
     png_input.upload(estimate, png_input, [jsonbox])
     png_input.upload(None, png_input, [width, height], _js="addBackground")
     add.click(None, [], None, _js="addPose")
-    png_input_area.change(estimate, [png_input_area], [jsonbox])
     send_t2t.click(None, select_target_index, None, _js="(i) => {sendImage('txt2img', i)}")
     send_i2i.click(None, select_target_index, None, _js="(i) => {sendImage('img2img', i)}")
     reset_btn.click(None, [], None, _js="resetCanvas")
