@@ -62,9 +62,7 @@ function gradioApp() {
     return !!gradioShadowRoot ? gradioShadowRoot : document;
 }
 
-function calcResolution(resolution){
-    const width = resolution[0]
-    const height = resolution[1]
+function calcResolution(width, height){
     const viewportWidth = window.innerWidth / 2.25;
     const viewportHeight = window.innerHeight * 0.75;
     const ratio = Math.min(viewportWidth / width, viewportHeight / height);
@@ -75,7 +73,7 @@ function resizeCanvas(width, height){
     const elem = openpose_editor_elem;
     const canvas = openpose_editor_canvas;
 
-    let resolution = calcResolution([width, height])
+    let resolution = calcResolution(width, height)
 
     canvas.setWidth(width);
     canvas.setHeight(height);
@@ -310,7 +308,7 @@ function initCanvas(elem){
     const json_observer = new MutationObserver((m) => {
         if(gradioApp().querySelector('#tab_openpose_editor').style.display!=='block') return;
         try {
-            const raw = gradioApp().querySelector("#hide_json").querySelector("textarea").value.replaceAll("'", '"')
+            const raw = gradioApp().querySelector("#jsonbox").querySelector("textarea").value.replaceAll("'", '"')
             const json = JSON.parse(raw)
 
             let candidate = json["candidate"]
@@ -327,24 +325,12 @@ function initCanvas(elem){
                 }
             }
 
+            const bgimage = openpose_editor_canvas.backgroundImage
             setPose(li);
-
-            const fileReader = new FileReader();
-            fileReader.onload = function() {
-                const dataUri = this.result;
-                canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
-                    opacity: 0.5
-                });
-                const img = new Image();
-                img.onload = function() {
-                    resizeCanvas(this.width, this.height)
-                }
-                img.src = dataUri;
-            }
-            fileReader.readAsDataURL(gradioApp().querySelector("#openpose_editor_input").querySelector("input").files[0]);
+            openpose_editor_canvas.backgroundImage = bgimage
         } catch(e){console.log(e)}
     })
-    json_observer.observe(gradioApp().querySelector("#hide_json"), { "attributes": true })
+    json_observer.observe(gradioApp().querySelector("#jsonbox"), { "attributes": true })
 
     // document.addEventListener('keydown', function(e) {
     //     if (e.key !== undefined) {
@@ -412,19 +398,20 @@ function saveJSON(){
     URL.revokeObjectURL(a.href);
 }
 
-function loadJSON(){
-    const input = document.createElement("input");
-    input.type = "file"
-    input.accept = "application/json"
-    input.addEventListener("change", function(e){
-        const file = e.target.files[0];
-		var fileReader = new FileReader();
-		fileReader.onload = function() {
-            loadPreset(this.result)
-		}
-		fileReader.readAsText(file);
-    })
-    input.click()
+async function loadJSON(file){
+    const response = await fetch(file.data)
+    const json = await response.json();
+    if (json["width"] && json["height"]) {
+        resizeCanvas(json["width"], json["height"])
+    }else{
+        throw new Error('width, height is invalid');
+    }
+    if (json["keypoints"].length % 18 === 0) {
+        setPose(json["keypoints"])
+    }else{
+        throw new Error('keypoints is invalid')
+    }
+    return [json["width"], json["height"]]
 }
 
 function savePreset(){
@@ -453,29 +440,14 @@ function loadPreset(json){
     }
 }
 
-function addBackground(){
-    const input = document.createElement("input");
-    input.type = "file"
-    input.accept = "image/*"
-    input.addEventListener("change", function(e){
-        const canvas = openpose_editor_canvas
-        const file = e.target.files[0];
-		var fileReader = new FileReader();
-		fileReader.onload = function() {
-			var dataUri = this.result;
-            canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
-                opacity: 0.5
-            });
-            const img = new Image();
-            img.onload = function() {
-                resizeCanvas(this.width, this.height)
-            }
-            img.src = dataUri;
-		}
-		fileReader.readAsDataURL(file);
-    })
-    input.click()
-    return
+async function addBackground(file){
+    openpose_editor_canvas.setBackgroundImage(file.data, openpose_editor_canvas.renderAll.bind(openpose_editor_canvas), {
+        opacity: 0.5
+    });
+    const img = new Image();
+    await (img.src = file.data);
+    resizeCanvas(this.width, this.height)
+    return [img.width, img.height]
 }
 
 function detectImage(){
