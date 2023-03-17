@@ -446,7 +446,7 @@ async function addBackground(file){
     });
     const img = new Image();
     await (img.src = file.data);
-    resizeCanvas(this.width, this.height)
+    resizeCanvas(img.width, img.height)
     return [img.width, img.height]
 }
 
