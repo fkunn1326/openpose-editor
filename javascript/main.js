@@ -508,6 +508,55 @@ function sendImage(type, index){
     openpose_editor_canvas.renderAll()
 }
 
+function canvas_onDragOver(event) {
+    if (event.dataTransfer.items[0].type.startsWith("image/")) {
+        event.preventDefault();
+        gradioApp().querySelector("#canvasdrop").style.visibility = "visible";
+    }
+}
+
+function canvas_onDragLeave(event) {
+    gradioApp().querySelector("#canvasdrop").style.visibility = "hidden";
+}
+
+function canvas_onDrop(event) {
+    if (event.dataTransfer.items[0].type.startsWith("image/")) {
+        event.preventDefault();
+        const canvas = openpose_editor_canvas
+        const file = event.dataTransfer.items[0].getAsFile();
+		var fileReader = new FileReader();
+		fileReader.onload = function() {
+			var dataUri = this.result;
+            canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
+                opacity: 0.5
+            });
+            const img = new Image();
+            img.onload = function() {
+                resizeCanvas(this.width, this.height)
+            }
+            img.src = dataUri;
+		}
+		fileReader.readAsDataURL(file);
+        gradioApp().querySelector("#canvasdrop").style.visibility = "hidden";
+    }
+}
+
+function detect_onDragOver(event) {
+    if (event.dataTransfer.items[0].type.startsWith("image/")) {
+        event.preventDefault();
+    }
+}
+
+function detect_onDrop(event) {
+    if (event.dataTransfer.items[0].type.startsWith("image/")) {
+        event.preventDefault();
+        input = event.target.previousElementSibling;
+        input.files = event.dataTransfer.files;
+        const changeEvent = new Event('change', { 'bubbles': true, "composed": true });
+        input.dispatchEvent(changeEvent);
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     const observer = new MutationObserver((m) => {
         if(!executed_openpose_editor && gradioApp().querySelector('#openpose_editor_canvas')){
@@ -517,6 +566,26 @@ window.addEventListener('DOMContentLoaded', () => {
             //     if (elem.innerText === "OpenPose Editor") elem.click()
             // })
             observer.disconnect();
+            
+            var overlay = document.createElement("div");
+            overlay.id = "canvasdrop"
+            overlay.textContent = "Set Background"
+            overlay.style = "pointer-events: none; visibility: hidden; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: white; font-size: 2.5em; font-family: system-ui; line-height: 100%; background: rgba(0,0,0,0.5); margin: 0.25rem; border-radius: 0.25rem; border: 0.5px solid; position: absolute;"
+
+            var canvas = gradioApp().querySelector("#tab_openpose_editor .canvas-container")
+            canvas.appendChild(overlay)
+            canvas.addEventListener("dragover", canvas_onDragOver);
+            canvas.addEventListener("dragleave", canvas_onDragLeave);
+            canvas.addEventListener("drop", canvas_onDrop);
+
+            var bg_button = gradioApp().querySelector("#openpose_bg_button")
+            bg_button.addEventListener("dragover", canvas_onDragOver);
+            bg_button.addEventListener("dragleave", canvas_onDragLeave);
+            bg_button.addEventListener("drop", canvas_onDrop);
+
+            var detect_button = gradioApp().querySelector("#openpose_detect_button")
+            detect_button.addEventListener("dragover", detect_onDragOver);
+            detect_button.addEventListener("drop", detect_onDrop);
         }
     })
     observer.observe(gradioApp(), { childList: true, subtree: true })
