@@ -515,10 +515,6 @@ function canvas_onDragOver(event) {
     }
 }
 
-function canvas_onDragLeave(event) {
-    gradioApp().querySelector("#canvasdrop").style.visibility = "hidden";
-}
-
 function canvas_onDrop(event) {
     if (event.dataTransfer.items[0].type.startsWith("image/")) {
         event.preventDefault();
@@ -541,10 +537,15 @@ function canvas_onDrop(event) {
     }
 }
 
-function detect_onDragOver(event) {
+function button_onDragOver(event) {
     if (event.dataTransfer.items[0].type.startsWith("image/")) {
         event.preventDefault();
+        event.target.classList.remove("gr-button-secondary");
     }
+}
+
+function button_onDragLeave(event) {
+    event.target.classList.add("gr-button-secondary");
 }
 
 function detect_onDrop(event) {
@@ -575,17 +576,23 @@ window.addEventListener('DOMContentLoaded', () => {
             var canvas = gradioApp().querySelector("#tab_openpose_editor .canvas-container")
             canvas.appendChild(overlay)
             canvas.addEventListener("dragover", canvas_onDragOver);
-            canvas.addEventListener("dragleave", canvas_onDragLeave);
+            canvas.addEventListener("dragleave", () => gradioApp().querySelector("#canvasdrop").style.visibility = "hidden");
             canvas.addEventListener("drop", canvas_onDrop);
 
             var bg_button = gradioApp().querySelector("#openpose_bg_button")
-            bg_button.addEventListener("dragover", canvas_onDragOver);
-            bg_button.addEventListener("dragleave", canvas_onDragLeave);
+            bg_button.addEventListener("dragover", button_onDragOver);
+            bg_button.addEventListener("dragleave", button_onDragLeave);
             bg_button.addEventListener("drop", canvas_onDrop);
+            bg_button.addEventListener("drop", event => event.target.classList.add("gr-button-secondary"));
+            bg_button.classList.add("gr-button-secondary");
 
             var detect_button = gradioApp().querySelector("#openpose_detect_button")
-            detect_button.addEventListener("dragover", detect_onDragOver);
+            detect_button.addEventListener("dragover", button_onDragOver);
+            detect_button.addEventListener("dragleave", button_onDragLeave);
             detect_button.addEventListener("drop", detect_onDrop);
+            detect_button.classList.add("gr-button-secondary");
+            
+            gradioApp().querySelector("#openpose_json_button").classList.add("gr-button-secondary");
         }
     })
     observer.observe(gradioApp(), { childList: true, subtree: true })
