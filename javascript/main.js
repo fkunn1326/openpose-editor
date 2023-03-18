@@ -527,21 +527,10 @@ function canvas_onDrop(event) {
 
     if (event.dataTransfer.items[0].type.startsWith("image/")) {
         event.preventDefault();
-        const canvas = openpose_editor_canvas
-        const file = event.dataTransfer.items[0].getAsFile();
-		var fileReader = new FileReader();
-		fileReader.onload = function() {
-			var dataUri = this.result;
-            canvas.setBackgroundImage(dataUri, canvas.renderAll.bind(canvas), {
-                opacity: 0.5
-            });
-            const img = new Image();
-            img.onload = function() {
-                resizeCanvas(this.width, this.height)
-            }
-            img.src = dataUri;
-		}
-		fileReader.readAsDataURL(file);
+        input = gradioApp().querySelector("#openpose_bg_button").previousElementSibling;
+        input.files = event.dataTransfer.files;
+        const changeEvent = new Event('change', { 'bubbles': true, "composed": true });
+        input.dispatchEvent(changeEvent);
         canvas_drag_overlay.style.visibility = "hidden";
     } else if (event.dataTransfer.items[0].type == "application/json") {
         event.preventDefault();
