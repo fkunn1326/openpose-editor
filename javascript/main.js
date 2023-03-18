@@ -509,13 +509,22 @@ function sendImage(type, index){
 }
 
 function canvas_onDragOver(event) {
+    canvas_drag_overlay = gradioApp().querySelector("#canvas_drag_overlay");
+
     if (event.dataTransfer.items[0].type.startsWith("image/")) {
         event.preventDefault();
-        gradioApp().querySelector("#canvasdrop").style.visibility = "visible";
+        canvas_drag_overlay.textContent = "Add Background";
+        canvas_drag_overlay.style.visibility = "visible";
+    } else if (event.dataTransfer.items[0].type == "application/json") {
+        event.preventDefault();
+        canvas_drag_overlay.textContent = "Load JSON";
+        canvas_drag_overlay.style.visibility = "visible";
     }
 }
 
 function canvas_onDrop(event) {
+    canvas_drag_overlay = gradioApp().querySelector("#canvas_drag_overlay");
+
     if (event.dataTransfer.items[0].type.startsWith("image/")) {
         event.preventDefault();
         const canvas = openpose_editor_canvas
@@ -533,12 +542,20 @@ function canvas_onDrop(event) {
             img.src = dataUri;
 		}
 		fileReader.readAsDataURL(file);
-        gradioApp().querySelector("#canvasdrop").style.visibility = "hidden";
+        canvas_drag_overlay.style.visibility = "hidden";
+    } else if (event.dataTransfer.items[0].type == "application/json") {
+        event.preventDefault();
+        input = gradioApp().querySelector("#openpose_json_button").previousElementSibling;
+        input.files = event.dataTransfer.files;
+        const changeEvent = new Event('change', { 'bubbles': true, "composed": true });
+        input.dispatchEvent(changeEvent);
+        canvas_drag_overlay.style.visibility = "hidden";
     }
 }
 
 function button_onDragOver(event) {
-    if (event.dataTransfer.items[0].type.startsWith("image/")) {
+    if (((event.target.id == "openpose_detect_button" || event.target.id == "openpose_bg_button") && event.dataTransfer.items[0].type.startsWith("image/")) ||
+        (event.target.id == "openpose_json_button" && event.dataTransfer.items[0].type == "application/json")) {
         event.preventDefault();
         event.target.classList.remove("gr-button-secondary");
     }
@@ -558,6 +575,16 @@ function detect_onDrop(event) {
     }
 }
 
+function json_onDrop(event) {
+    if (event.dataTransfer.items[0].type == "application/json") {
+        event.preventDefault();
+        input = event.target.previousElementSibling;
+        input.files = event.dataTransfer.files;
+        const changeEvent = new Event('change', { 'bubbles': true, "composed": true });
+        input.dispatchEvent(changeEvent);
+    }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     const observer = new MutationObserver((m) => {
         if(!executed_openpose_editor && gradioApp().querySelector('#openpose_editor_canvas')){
@@ -568,15 +595,14 @@ window.addEventListener('DOMContentLoaded', () => {
             // })
             observer.disconnect();
             
-            var overlay = document.createElement("div");
-            overlay.id = "canvasdrop"
-            overlay.textContent = "Set Background"
-            overlay.style = "pointer-events: none; visibility: hidden; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: white; font-size: 2.5em; font-family: system-ui; line-height: 100%; background: rgba(0,0,0,0.5); margin: 0.25rem; border-radius: 0.25rem; border: 0.5px solid; position: absolute;"
+            var canvas_drag_overlay = document.createElement("div");
+            canvas_drag_overlay.id = "canvas_drag_overlay"
+            canvas_drag_overlay.style = "pointer-events: none; visibility: hidden; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: white; font-size: 2.5em; font-family: inherit; font-weight: 600; line-height: 100%; background: rgba(0,0,0,0.5); margin: 0.25rem; border-radius: 0.25rem; border: 0.5px solid; position: absolute;"
 
             var canvas = gradioApp().querySelector("#tab_openpose_editor .canvas-container")
-            canvas.appendChild(overlay)
+            canvas.appendChild(canvas_drag_overlay)
             canvas.addEventListener("dragover", canvas_onDragOver);
-            canvas.addEventListener("dragleave", () => gradioApp().querySelector("#canvasdrop").style.visibility = "hidden");
+            canvas.addEventListener("dragleave", () => gradioApp().querySelector("#canvas_drag_overlay").style.visibility = "hidden");
             canvas.addEventListener("drop", canvas_onDrop);
 
             var bg_button = gradioApp().querySelector("#openpose_bg_button")
@@ -592,7 +618,11 @@ window.addEventListener('DOMContentLoaded', () => {
             detect_button.addEventListener("drop", detect_onDrop);
             detect_button.classList.add("gr-button-secondary");
             
-            gradioApp().querySelector("#openpose_json_button").classList.add("gr-button-secondary");
+            var json_button = gradioApp().querySelector("#openpose_json_button")
+            json_button.addEventListener("dragover", button_onDragOver);
+            json_button.addEventListener("dragleave", button_onDragLeave);
+            json_button.addEventListener("drop", json_onDrop);
+            json_button.classList.add("gr-button-secondary");
         }
     })
     observer.observe(gradioApp(), { childList: true, subtree: true })
