@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import numpy as np
 import cv2
@@ -13,6 +14,8 @@ from modules.paths import models_path
 from basicsr.utils.download_util import load_file_from_url
 
 from scripts.openpose.body import Body
+
+from PIL import Image
 
 body_estimation = None
 presets_file = os.path.join(scripts.basedir(), "presets.json")
@@ -68,10 +71,9 @@ def on_ui_tabs():
           # delete = gr.Button(value="Delete")
         with gr.Row():
           reset_btn = gr.Button(value="Reset")
-          json_input = gr.Button(value="Load from JSON")
-          png_input = gr.Button(value="Detect from image")
-          png_input_area = gr.Image(label="Detect from image", elem_id="openpose_editor_input", visible=False)
-          bg_input = gr.Button(value="Add Background image")
+          json_input = gr.UploadButton(label="Load from JSON", file_types=[".json"], elem_id="openpose_json_button")
+          png_input = gr.UploadButton(label="Detect from Image", file_types=["image"], type="bytes", elem_id="openpose_detect_button")
+          bg_input = gr.UploadButton(label="Add Background Image", file_types=["image"], elem_id="openpose_bg_button")
         with gr.Row():
           preset_list = gr.Dropdown(label="Presets", choices=sorted(presets.keys()), interactive=True)
           preset_load = gr.Button(value="Load Preset")
@@ -80,7 +82,7 @@ def on_ui_tabs():
       with gr.Column():
         # gradioooooo...
         canvas = gr.HTML('<canvas id="openpose_editor_canvas" width="512" height="512" style="margin: 0.25rem; border-radius: 0.25rem; border: 0.5px solid"></canvas>')
-        jsonbox = gr.Text(label="json", elem_id="hide_json", visible=False)
+        jsonbox = gr.Text(label="json", elem_id="jsonbox", visible=False)
         with gr.Row():
           json_output = gr.Button(value="Save JSON")
           png_output = gr.Button(value="Save PNG")
@@ -89,7 +91,7 @@ def on_ui_tabs():
           control_net_max_models_num = getattr(opts, 'control_net_max_models_num', 0)
           select_target_index = gr.Dropdown([str(i) for i in range(control_net_max_models_num)], label="Send to", value="0", interactive=True, visible=(control_net_max_models_num > 1))
 
-    def estimate(img):
+    def estimate(file):
       global body_estimation
 
       if body_estimation is None:
@@ -99,11 +101,13 @@ def on_ui_tabs():
           load_file_from_url(body_model_path, model_dir=os.path.join(models_path, "openpose"))
         body_estimation = Body(model_path)
         
+      stream = io.BytesIO(file)
+      img = Image.open(stream)
       candidate, subset = body_estimation(pil2cv(img))
 
       result = {
         "candidate": candidate2li(candidate),
-        "subset": subset2li(subset)
+        "subset": subset2li(subset),
       }
       
       return result
@@ -125,14 +129,14 @@ def on_ui_tabs():
     width.change(None, [width, height], None, _js="(w, h) => {resizeCanvas(w, h)}")
     height.change(None, [width, height], None, _js="(w, h) => {resizeCanvas(w, h)}")
     png_output.click(None, [], None, _js="savePNG")
-    bg_input.click(None, [], None, _js="addBackground")
-    png_input.click(None, [], None, _js="detectImage")
+    bg_input.upload(None, [bg_input], [width, height], _js="addBackground")
+    png_input.upload(estimate, png_input, [jsonbox])
+    png_input.upload(None, png_input, [width, height], _js="addBackground")
     add.click(None, [], None, _js="addPose")
-    png_input_area.change(estimate, [png_input_area], [jsonbox])
     send_t2t.click(None, select_target_index, None, _js="(i) => {sendImage('txt2img', i)}")
     send_i2i.click(None, select_target_index, None, _js="(i) => {sendImage('img2img', i)}")
     reset_btn.click(None, [], None, _js="resetCanvas")
-    json_input.click(None, json_input, [width, height], _js="loadJSON")
+    json_input.upload(None, json_input, [width, height], _js="loadJSON")
     json_output.click(None, None, None, _js="saveJSON")
     preset_save.click(savePreset, [dummy_component, dummy_component], [preset_list, preset], _js="savePreset")
     preset_load.click(None, preset, [width, height], _js="loadPreset")
