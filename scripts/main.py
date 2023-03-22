@@ -110,7 +110,7 @@ def on_ui_tabs():
         "subset": subset2li(subset),
       }
       
-      return result
+      return str(result).replace("'", '"')
 
     def savePreset(name, data):
       if name:
@@ -120,17 +120,13 @@ def on_ui_tabs():
         return gr.update(choices=sorted(presets.keys()), value=name), json.dumps(data)
       return gr.update(), gr.update()
 
-    def loadPreset(name):
-      if name in presets:
-        return presets[name]
-
     dummy_component = gr.Label(visible=False)
     preset = gr.Text(visible=False)
     width.change(None, [width, height], None, _js="(w, h) => {resizeCanvas(w, h)}")
     height.change(None, [width, height], None, _js="(w, h) => {resizeCanvas(w, h)}")
     png_output.click(None, [], None, _js="savePNG")
     bg_input.upload(None, [bg_input], [width, height], _js="addBackground")
-    png_input.upload(estimate, png_input, [jsonbox])
+    png_input.upload(estimate, png_input, jsonbox).then(None, jsonbox, None, _js="detectImage")
     png_input.upload(None, png_input, [width, height], _js="addBackground")
     add.click(None, [], None, _js="addPose")
     send_t2t.click(None, select_target_index, None, _js="(i) => {sendImage('txt2img', i)}")
