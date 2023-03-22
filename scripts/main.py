@@ -71,9 +71,9 @@ def on_ui_tabs():
           # delete = gr.Button(value="Delete")
         with gr.Row():
           reset_btn = gr.Button(value="Reset")
-          json_input = gr.UploadButton(label="Load from JSON", file_types=[".json"], elem_id="openpose_json_button")
-          png_input = gr.UploadButton(label="Detect from Image", file_types=["image"], type="bytes", elem_id="openpose_detect_button")
-          bg_input = gr.UploadButton(label="Add Background Image", file_types=["image"], elem_id="openpose_bg_button")
+          json_input = gr.UploadButton(label="Load from JSON", file_types=[".json"], elem_id="openpose_json_button", elem_classes=["gr-button-secondary"])
+          png_input = gr.UploadButton(label="Detect from Image", file_types=["image"], type="bytes", elem_id="openpose_detect_button", elem_classes=["gr-button-secondary"])
+          bg_input = gr.UploadButton(label="Add Background Image", file_types=["image"], elem_id="openpose_bg_button", elem_classes=["gr-button-secondary"])
         with gr.Row():
           preset_list = gr.Dropdown(label="Presets", choices=sorted(presets.keys()), interactive=True)
           preset_load = gr.Button(value="Load Preset")

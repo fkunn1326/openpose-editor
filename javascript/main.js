@@ -586,19 +586,16 @@ window.addEventListener('DOMContentLoaded', () => {
             bg_button.addEventListener("dragleave", button_onDragLeave);
             bg_button.addEventListener("drop", canvas_onDrop);
             bg_button.addEventListener("drop", event => event.target.classList.add("gr-button-secondary"));
-            bg_button.classList.add("gr-button-secondary");
 
             var detect_button = gradioApp().querySelector("#openpose_detect_button")
             detect_button.addEventListener("dragover", button_onDragOver);
             detect_button.addEventListener("dragleave", button_onDragLeave);
             detect_button.addEventListener("drop", detect_onDrop);
-            detect_button.classList.add("gr-button-secondary");
             
             var json_button = gradioApp().querySelector("#openpose_json_button")
             json_button.addEventListener("dragover", button_onDragOver);
             json_button.addEventListener("dragleave", button_onDragLeave);
             json_button.addEventListener("drop", json_onDrop);
-            json_button.classList.add("gr-button-secondary");
         }
     })
     observer.observe(gradioApp(), { childList: true, subtree: true })
