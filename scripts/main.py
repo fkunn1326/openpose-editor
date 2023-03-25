@@ -71,9 +71,9 @@ def on_ui_tabs():
           # delete = gr.Button(value="Delete")
         with gr.Row():
           reset_btn = gr.Button(value="Reset")
-          json_input = gr.UploadButton(label="Load from JSON", file_types=[".json"], elem_id="openpose_json_button")
-          png_input = gr.UploadButton(label="Detect from Image", file_types=["image"], type="bytes", elem_id="openpose_detect_button")
-          bg_input = gr.UploadButton(label="Add Background Image", file_types=["image"], elem_id="openpose_bg_button")
+          json_input = gr.UploadButton(label="Load from JSON", file_types=[".json"], elem_id="openpose_json_button", elem_classes=["gr-button-secondary"])
+          png_input = gr.UploadButton(label="Detect from Image", file_types=["image"], type="bytes", elem_id="openpose_detect_button", elem_classes=["gr-button-secondary"])
+          bg_input = gr.UploadButton(label="Add Background Image", file_types=["image"], elem_id="openpose_bg_button", elem_classes=["gr-button-secondary"])
         with gr.Row():
           preset_list = gr.Dropdown(label="Presets", choices=sorted(presets.keys()), interactive=True)
           preset_load = gr.Button(value="Load Preset")
@@ -110,7 +110,7 @@ def on_ui_tabs():
         "subset": subset2li(subset),
       }
       
-      return result
+      return str(result).replace("'", '"')
 
     def savePreset(name, data):
       if name:
@@ -120,17 +120,13 @@ def on_ui_tabs():
         return gr.update(choices=sorted(presets.keys()), value=name), json.dumps(data)
       return gr.update(), gr.update()
 
-    def loadPreset(name):
-      if name in presets:
-        return presets[name]
-
     dummy_component = gr.Label(visible=False)
     preset = gr.Text(visible=False)
     width.change(None, [width, height], None, _js="(w, h) => {resizeCanvas(w, h)}")
     height.change(None, [width, height], None, _js="(w, h) => {resizeCanvas(w, h)}")
     png_output.click(None, [], None, _js="savePNG")
     bg_input.upload(None, [bg_input], [width, height], _js="addBackground")
-    png_input.upload(estimate, png_input, [jsonbox])
+    png_input.upload(estimate, png_input, jsonbox).then(None, jsonbox, None, _js="detectImage")
     png_input.upload(None, png_input, [width, height], _js="addBackground")
     add.click(None, [], None, _js="addPose")
     send_t2t.click(None, select_target_index, None, _js="(i) => {sendImage('txt2img', i)}")

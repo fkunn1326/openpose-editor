@@ -305,33 +305,6 @@ function initCanvas(elem){
 
     undo_history.push(JSON.stringify(canvas));
 
-    const json_observer = new MutationObserver((m) => {
-        if(gradioApp().querySelector('#tab_openpose_editor').style.display!=='block') return;
-        try {
-            const raw = gradioApp().querySelector("#jsonbox").querySelector("textarea").value.replaceAll("'", '"')
-            const json = JSON.parse(raw)
-
-            let candidate = json["candidate"]
-            let subset = json["subset"]
-            const li = []
-            subset = subset.splice(0, 18)
-            for (i=0; subset.length > i; i++){
-                if (Number.isInteger(subset[i]) && subset[i] >= 0){
-                    li.push(candidate[subset[i]])
-                }else{
-                    const ra_width = Math.floor(Math.random() * canvas.width)
-                    const ra_height = Math.floor(Math.random() * canvas.height)
-                    li.push([ra_width, ra_height])
-                }
-            }
-
-            const bgimage = openpose_editor_canvas.backgroundImage
-            setPose(li);
-            openpose_editor_canvas.backgroundImage = bgimage
-        } catch(e){console.log(e)}
-    })
-    json_observer.observe(gradioApp().querySelector("#jsonbox"), { "attributes": true })
-
     // document.addEventListener('keydown', function(e) {
     //     if (e.key !== undefined) {
     //         if((e.key == "z" && (e.metaKey || e.ctrlKey || e.altKey))) undo()
@@ -373,10 +346,9 @@ function savePNG(){
 }
 
 function serializeJSON(){
-    const canvas = openpose_editor_canvas
     const json = JSON.stringify({
-        "width": canvas.width,
-        "height": canvas.height,
+        "width": openpose_editor_canvas.width,
+        "height": openpose_editor_canvas.height,
         "keypoints": openpose_editor_canvas.getObjects().filter((item) => {
             if (item.type === "circle") return item
         }).map((item) => {
@@ -399,8 +371,7 @@ function saveJSON(){
 }
 
 async function loadJSON(file){
-    const response = await fetch(file.data)
-    const json = await response.json();
+    const json = JSON.parse(await file.blob.text())
     if (json["width"] && json["height"]) {
         resizeCanvas(json["width"], json["height"])
     }else{
@@ -441,20 +412,36 @@ function loadPreset(json){
 }
 
 async function addBackground(file){
-    openpose_editor_canvas.setBackgroundImage(file.data, openpose_editor_canvas.renderAll.bind(openpose_editor_canvas), {
+    const url = await new Promise(r => {let a=new FileReader(); a.onload=r; a.readAsDataURL(file.blob)}).then(e => e.target.result);
+    openpose_editor_canvas.setBackgroundImage(url, openpose_editor_canvas.renderAll.bind(openpose_editor_canvas), {
         opacity: 0.5
     });
     const img = new Image();
-    await (img.src = file.data);
+    await (img.src = url);
     resizeCanvas(img.width, img.height)
     return [img.width, img.height]
 }
 
-function detectImage(){
-    const input = gradioApp().querySelector("#openpose_editor_input").querySelector("input");
-    input.accept = "image/*";
-    input.click();
-    return
+function detectImage(raw){
+    const json = JSON.parse(raw)
+
+    let candidate = json["candidate"]
+    let subset = json["subset"]
+    const li = []
+    subset = subset.splice(0, 18)
+    for (i=0; subset.length > i; i++){
+        if (Number.isInteger(subset[i]) && subset[i] >= 0){
+            li.push(candidate[subset[i]])
+        }else{
+            const ra_width = Math.floor(Math.random() * openpose_editor_canvas.width)
+            const ra_height = Math.floor(Math.random() * openpose_editor_canvas.height)
+            li.push([ra_width, ra_height])
+        }
+    }
+
+    const bgimage = openpose_editor_canvas.backgroundImage
+    setPose(li);
+    openpose_editor_canvas.backgroundImage = bgimage
 }
 
 function sendImage(type, index){
@@ -592,17 +579,15 @@ onUiLoaded(function() {
     bg_button.addEventListener("dragleave", button_onDragLeave);
     bg_button.addEventListener("drop", canvas_onDrop);
     bg_button.addEventListener("drop", event => event.target.classList.add("gr-button-secondary"));
-    bg_button.classList.add("gr-button-secondary");
 
     var detect_button = gradioApp().querySelector("#openpose_detect_button")
     detect_button.addEventListener("dragover", button_onDragOver);
     detect_button.addEventListener("dragleave", button_onDragLeave);
     detect_button.addEventListener("drop", detect_onDrop);
-    detect_button.classList.add("gr-button-secondary");
     
     var json_button = gradioApp().querySelector("#openpose_json_button")
     json_button.addEventListener("dragover", button_onDragOver);
     json_button.addEventListener("dragleave", button_onDragLeave);
     json_button.addEventListener("drop", json_onDrop);
-    json_button.classList.add("gr-button-secondary");
+
 })
