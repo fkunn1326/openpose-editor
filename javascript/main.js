@@ -317,7 +317,7 @@ function initCanvas(elem){
         if(gradioApp().querySelector('#tab_openpose_editor').style.display!=='block') return;
         try {
             const raw = gradioApp().querySelector("#jsonbox").querySelector("textarea").value
-            detectImage(raw)
+            if(raw.length!==0) detectImage(raw);
         } catch(e){console.log(e)}
     })
     json_observer.observe(gradioApp().querySelector("#jsonbox"), { "attributes": true })
