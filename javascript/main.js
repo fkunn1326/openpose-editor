@@ -380,9 +380,10 @@ function saveJSON(){
     const blob = new Blob([json], {
         type: "application/json"
     });
+    const filename = "pose-" + Date.now().toString() + ".json"
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "pose.json";
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(a.href);
 }
