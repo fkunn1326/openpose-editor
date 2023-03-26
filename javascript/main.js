@@ -56,12 +56,6 @@ let openpose_obj = {
 
 const default_keypoints = [[241,77],[241,120],[191,118],[177,183],[163,252],[298,118],[317,182],[332,245],[225,241],[213,359],[215,454],[270,240],[282,360],[286,456],[232,59],[253,60],[225,70],[260,72]]
 
-function gradioApp() {
-    const elems = document.getElementsByTagName('gradio-app')
-    const gradioShadowRoot = elems.length == 0 ? null : elems[0].shadowRoot
-    return !!gradioShadowRoot ? gradioShadowRoot : document;
-}
-
 async function fileToDataUrl(file) {
     if (file.data) {
         // Gradio version < 3.23
