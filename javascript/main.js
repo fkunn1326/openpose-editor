@@ -479,22 +479,17 @@ function sendImage(type, index){
             switch_to_img2img()
         }
 
-        const accordion = gradioApp().querySelector(selector).querySelector("#controlnet .transition");
-        if (accordion.classList.contains("rotate-90")) {
-            accordion.click()
-        }
-        
-        const tabs = gradioApp().querySelector(selector).querySelectorAll("#controlnet > div:nth-child(2) > .tabs > .tabitem, #controlnet > div:nth-child(2) > div:not(.tabs)")
-        const tab = tabs[index]
-        if (tab.classList.contains("tabitem")) {
-            tab.parentElement.firstElementChild.querySelector(`:nth-child(${Number(index) + 1})`).click()
-        }
-        const input = tab.querySelector("input[type='file']")
-        try {
-            input.previousElementSibling.previousElementSibling.querySelector("button[aria-label='Clear']").click()
-        } catch (e) {
-            console.error(e)
-        }
+		// 20230328 JY 
+        const accordion = gradioApp().querySelector(selector).querySelector("#controlnet").querySelectorAll("span.icon.svelte-s1r2yt")[0];
+		// Show controlNet box
+		let rotate = accordion.style.transform.match(/rotate\((\d+)(.+)\)/);
+		if (rotate) {
+			let [num, unit] = rotate.slice(1);
+			if (num == "90") {
+				accordion.click()
+			}
+		}	
+		const input = gradioApp().querySelector(selector).querySelector("#controlnet").querySelector("input[type='file']");
         input.value = "";
         input.files = list;
         const event = new Event('change', { 'bubbles': true, "composed": true });
