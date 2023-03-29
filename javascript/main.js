@@ -479,26 +479,50 @@ function sendImage(type, index){
             switch_to_img2img()
         }
 
-        const accordion = gradioApp().querySelector(selector).querySelector("#controlnet .transition");
-        if (accordion.classList.contains("rotate-90")) {
+        const isNew =  window.gradio_config.version.replace("\n", "") <= "3.23.0"
+        
+        const accordion_selector = isNew ? "#controlnet > .label-wrap > .icon" : "#controlnet .transition"
+        const accordion = gradioApp().querySelector(selector).querySelector(accordion_selector)
+        if (isNew ? accordion.style.transform == "rotate(90deg)" : accordion.classList.contains("rotate-90")) {
             accordion.click()
         }
         
-        const tabs = gradioApp().querySelector(selector).querySelectorAll("#controlnet > div:nth-child(2) > .tabs > .tabitem, #controlnet > div:nth-child(2) > div:not(.tabs)")
-        const tab = tabs[index]
-        if (tab.classList.contains("tabitem")) {
-            tab.parentElement.firstElementChild.querySelector(`:nth-child(${Number(index) + 1})`).click()
+        const tabs_selector = isNew ? "#controlnet > div > div.tabs > div:not(.tab-nav)" : "#controlnet > div:nth-child(2) > .tabs > .tabitem, #controlnet > div:nth-child(2) > div:not(.tabs)"
+        let tabs = gradioApp().querySelector(selector).querySelectorAll(tabs_selector)
+
+        const input_image = () =>{
+            const tab = tabs[index]
+            if (tab.classList.contains("tabitem")) {
+                tab.parentElement.firstElementChild.querySelector(`:nth-child(${Number(index) + 1})`).click()
+            }
+
+            const input = tab.querySelector("input[type='file']")
+            try {
+                input.previousElementSibling.previousElementSibling.querySelector("button[aria-label='Clear']").click()
+            } catch (e) {
+                console.error(e)
+            }
+            input.value = "";
+            input.files = list;
+            const event = new Event('change', { 'bubbles': true, "composed": true });
+            input.dispatchEvent(event);
         }
-        const input = tab.querySelector("input[type='file']")
-        try {
-            input.previousElementSibling.previousElementSibling.querySelector("button[aria-label='Clear']").click()
-        } catch (e) {
-            console.error(e)
+
+        if (tabs.length === 0){
+            const callback = (observer) => {
+                tabs = gradioApp().querySelector(selector).querySelectorAll(tabs_selector)
+                if (tabs.length === 0){
+                    return
+                }else{
+                    input_image()
+                    observer.disconnect()
+                }
+            }
+            const observer = new MutationObserver(callback);
+            observer.observe(gradioApp().querySelector(selector).querySelector("#controlnet"), { childList: true });
+        }else{
+            input_image()
         }
-        input.value = "";
-        input.files = list;
-        const event = new Event('change', { 'bubbles': true, "composed": true });
-        input.dispatchEvent(event);
     });
     openpose_editor_canvas.getObjects("image").forEach((img) => {
         img.set({
