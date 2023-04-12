@@ -2,7 +2,6 @@ fabric.Object.prototype.transparentCorners = false;
 fabric.Object.prototype.cornerColor = '#108ce6';
 fabric.Object.prototype.borderColor = '#108ce6';
 fabric.Object.prototype.cornerSize = 10;
-fabric.Object.prototype.lockRotation = true;
 
 let count = 0;
 let executed_openpose_editor = false;
@@ -32,7 +31,7 @@ coco_body_keypoints = [
     "left_ear",
 ]
 
-let connect_keypoints = [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7], [1, 8], [8, 9], [9, 10], [1, 11], [11, 12], [12, 13], [0, 14], [14, 16], [0, 15], [15, 17]]
+let connect_keypoints = [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7], [1, 8], [8, 9], [9, 10], [1, 11], [11, 12], [12, 13], [14, 0], [14, 16], [15, 0], [15, 17]]
 
 let connect_color = [[0, 0, 255], [255, 0, 0], [255, 170, 0], [255, 255, 0], [255, 85, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0],
 [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [85, 0, 255],
@@ -54,6 +53,8 @@ let openpose_obj = {
     ]
 }
 
+let visibleEyes = true;
+let flipped = false;
 const default_keypoints = [[241,77],[241,120],[191,118],[177,183],[163,252],[298,118],[317,182],[332,245],[225,241],[213,359],[215,454],[270,240],[282,360],[286,456],[232,59],[253,60],[225,70],[260,72]]
 
 async function fileToDataUrl(file) {
@@ -147,7 +148,9 @@ function addPose(keypoints=undefined){
             strokeWidth: 1,
             radius: 5,
             fill: color,
-            stroke: color
+            stroke: color,
+            originX: 'center',
+            originY: 'center',
         });
         c.hasControls = c.hasBorders = false;
 
@@ -167,6 +170,8 @@ function addPose(keypoints=undefined){
             strokeWidth: 10,
             selectable: false,
             evented: false,
+            originX: 'center',
+            originY: 'center',
         });
     }
 
@@ -179,6 +184,7 @@ function addPose(keypoints=undefined){
         const line = makeLine(keypoints[item[0]].concat(keypoints[item[1]]), `rgba(${connect_color[i].join(", ")}, 0.7)`)
         lines.push(line)
         canvas.add(line)
+        line['id'] = item[0];
     }
 
     for (i = 0; i < keypoints.length; i++){
@@ -212,26 +218,73 @@ function initCanvas(elem){
 
     window.openpose_editor_elem = elem
 
-    canvas.on('object:moving', function(e) {
-        if ("_objects" in e.target) {
-            const rtop = e.target.top
-            const rleft = e.target.left
-            for (const item of e.target._objects){
-                let p = item;
-                const top = rtop + p.top * e.target.scaleY + e.target.height * e.target.scaleY / 2;
-                const left = rleft + p.left * e.target.scaleX + e.target.width * e.target.scaleX / 2;
-                if (p["id"] === 0) {
-                    p.line1 && p.line1.set({ 'x1': left, 'y1': top });
-                }else{
-                    p.line1 && p.line1.set({ 'x2': left, 'y2': top });
+    function updateLines(target) {
+        if ("_objects" in target) {
+            const flipX = target.flipX ? -1 : 1;
+            const flipY = target.flipY ? -1 : 1;
+            flipped = flipX * flipY === -1;
+            const showEyes = flipped ? !visibleEyes : visibleEyes;
+
+            if (target.angle === 0) {
+                const rtop = target.top
+                const rleft = target.left
+                for (const item of target._objects){
+                    let p = item;
+                    p.scaleX = 1;
+                    p.scaleY = 1;
+                    const top = rtop + p.top * target.scaleY * flipY + target.height * target.scaleY / 2;
+                    const left = rleft + p.left * target.scaleX * flipX + (target.width * target.scaleX / 2);
+                    p['_top'] = top;
+                    p['_left'] = left;
+                    if (p["id"] === 0) {
+                        p.line1 && p.line1.set({ 'x1': left, 'y1': top });
+                    }else{
+                        p.line1 && p.line1.set({ 'x2': left, 'y2': top });
+                    }
+                    if (p['id'] === 14 || p['id'] === 15) {
+                        p.radius = showEyes ? 5 : 0;
+                        if (p.line1) p.line1.strokeWidth = showEyes ? 10 : 0;
+                        if (p.line2) p.line2.strokeWidth = showEyes ? 10 : 0;
+                    }
+                    p.line2 && p.line2.set({ 'x1': left, 'y1': top });
+                    p.line3 && p.line3.set({ 'x1': left, 'y1': top });
+                    p.line4 && p.line4.set({ 'x1': left, 'y1': top });
+                    p.line5 && p.line5.set({ 'x1': left, 'y1': top });
+
                 }
-                p.line2 && p.line2.set({ 'x1': left, 'y1': top });
-                p.line3 && p.line3.set({ 'x1': left, 'y1': top });
-                p.line4 && p.line4.set({ 'x1': left, 'y1': top });
-                p.line5 && p.line5.set({ 'x1': left, 'y1': top });
+            } else {
+                const aCoords = target.aCoords;
+                const center = {'x': (aCoords.tl.x + aCoords.br.x)/2, 'y': (aCoords.tl.y + aCoords.br.y)/2};
+                const rad = target.angle * Math.PI / 180;
+                const sin = Math.sin(rad);
+                const cos = Math.cos(rad);
+    
+                for (const item of target._objects){
+                    let p = item;
+                    const p_top = p.top * target.scaleY * flipY;
+                    const p_left = p.left * target.scaleX * flipX;
+                    const left = center.x + p_left * cos - p_top * sin;
+                    const top = center.y + p_left * sin + p_top * cos;
+                    p['_top'] = top;
+                    p['_left'] = left;
+                    if (p["id"] === 0) {
+                        p.line1 && p.line1.set({ 'x1': left, 'y1': top });
+                    }else{
+                        p.line1 && p.line1.set({ 'x2': left, 'y2': top });
+                    }
+                    if (p['id'] === 14 || p['id'] === 15) {
+                        p.radius = showEyes ? 5 : 0.3;
+                        if (p.line1) p.line1.strokeWidth = showEyes ? 10 : 0;
+                        if (p.line2) p.line2.strokeWidth = showEyes ? 10 : 0;
+                    }
+                    p.line2 && p.line2.set({ 'x1': left, 'y1': top });
+                    p.line3 && p.line3.set({ 'x1': left, 'y1': top });
+                    p.line4 && p.line4.set({ 'x1': left, 'y1': top });
+                    p.line5 && p.line5.set({ 'x1': left, 'y1': top });
+                }
             }
-        }else{
-            var p = e.target;
+        } else {
+            var p = target;
             if (p["id"] === 0) {
                 p.line1 && p.line1.set({ 'x1': p.left, 'y1': p.top });
             }else{
@@ -243,56 +296,20 @@ function initCanvas(elem){
             p.line5 && p.line5.set({ 'x1': p.left, 'y1': p.top });
         }
         canvas.renderAll();
+    }
+
+    canvas.on('object:moving', function(e) {
+        updateLines(e.target);
     });
 
     canvas.on('object:scaling', function(e) {
-        if ("_objects" in e.target) {
-            const rtop = e.target.top
-            const rleft = e.target.left
-            for (const item of e.target._objects){
-                let p = item;
-                const top = rtop + p.top * e.target.scaleY + e.target.height * e.target.scaleY / 2;
-                const left = rleft + p.left * e.target.scaleX + e.target.width * e.target.scaleX / 2;
-                if (p["id"] === 0) {
-                    p.line1 && p.line1.set({ 'x1': left, 'y1': top });
-                }else{
-                    p.line1 && p.line1.set({ 'x2': left, 'y2': top });
-                }
-                p.line2 && p.line2.set({ 'x1': left, 'y1': top });
-                p.line3 && p.line3.set({ 'x1': left, 'y1': top });
-                p.line4 && p.line4.set({ 'x1': left, 'y1': top });
-                p.line5 && p.line5.set({ 'x1': left, 'y1': top });
-            }
-        }
+        updateLines(e.target);
         canvas.renderAll();
     });
 
     canvas.on('object:rotating', function(e) {
-        if ("_objects" in e.target) {
-            const rtop = e.target.top
-            const rleft = e.target.left
-            for (const item of e.target._objects){
-                let p = item;
-                const top = rtop + p.top // + e.target.height / 2;
-                const left = rleft + p.left // + e.target.width / 2;
-                if (p["id"] === 0) {
-                    p.line1 && p.line1.set({ 'x1': left, 'y1': top });
-                }else{
-                    p.line1 && p.line1.set({ 'x2': left, 'y2': top });
-                }
-                p.line2 && p.line2.set({ 'x1': left, 'y1': top });
-                p.line3 && p.line3.set({ 'x1': left, 'y1': top });
-                p.line4 && p.line4.set({ 'x1': left, 'y1': top });
-                p.line5 && p.line5.set({ 'x1': left, 'y1': top });
-            }
-        }
+        updateLines(e.target);
         canvas.renderAll();
-    });
-
-    canvas.on("object:added", function () {
-        if (lockMode) return;
-        undo_history.push(JSON.stringify(canvas));
-        redo_history.length = 0;
     });
 
     canvas.on("object:modified", function () {
