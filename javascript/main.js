@@ -2,7 +2,6 @@ fabric.Object.prototype.transparentCorners = false;
 fabric.Object.prototype.cornerColor = '#108ce6';
 fabric.Object.prototype.borderColor = '#108ce6';
 fabric.Object.prototype.cornerSize = 10;
-fabric.Object.prototype.lockRotation = false;
 
 let count = 0;
 let executed_openpose_editor = false;
@@ -318,12 +317,6 @@ function initCanvas(elem){
         undo_history.push(JSON.stringify(canvas));
         redo_history.length = 0;
     });
-
-    canvas.on("selection:created", function() {
-    })
-
-    canvas.on("selection:cleared", function() {
-    })
 
     resizeCanvas(...openpose_obj.resolution)
 
