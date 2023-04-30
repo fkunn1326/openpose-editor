@@ -103,6 +103,7 @@ def on_ui_tabs():
         
       stream = io.BytesIO(file)
       img = Image.open(stream)
+      img = img.convert("RGB")
       candidate, subset = body_estimation(pil2cv(img))
 
       result = {
