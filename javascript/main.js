@@ -464,12 +464,55 @@ function detectImage(raw){
         if (Number.isInteger(subset[i]) && subset[i] >= 0){
             li.push(candidate[subset[i]])
         }else{
-            const ra_width = Math.floor(Math.random() * openpose_editor_canvas.width)
-            const ra_height = Math.floor(Math.random() * openpose_editor_canvas.height)
-            li.push([ra_width, ra_height])
+            li.push([-1,-1])
         }
     }
-
+    if(li.length === 0){
+        const bgimage = openpose_editor_canvas.backgroundImage
+        setPose(li);
+        openpose_editor_canvas.backgroundImage = bgimage
+        return;
+    }
+    if(li.every(([x,y])=>x===-1&&y===-1)){
+        const ra_width = Math.floor(Math.random() * openpose_editor_canvas.width)
+        const ra_height = Math.floor(Math.random() * openpose_editor_canvas.height)
+        li[0] = [ra_width, ra_height]
+    }
+    default_relative_keypoints = []
+    for(i=0;i<default_keypoints.length;i++){
+        default_relative_keypoints.push([])
+        for(j=0;j<default_keypoints.length;j++){
+            x = default_keypoints[j][0] - default_keypoints[i][0];
+            y = default_keypoints[j][1] - default_keypoints[i][1];
+            default_relative_keypoints[i].push([x,y])
+        }
+    }
+    kp_connect = (i,j)=>{
+        for(idx=0;idx<connect_keypoints.length;idx++){
+            cp = connect_keypoints[idx];
+            if(((cp[0]===i)&&(cp[1]===j)) || ((cp[0]===j)&&(cp[1]===i))){
+                return true;
+            }
+        }
+        return false;
+    }
+    // bfs propagate
+    while(li.some(([x,y])=>x===-1&&y===-1)){
+        for(i=0;i<li.length;i++){
+            if(li[i][0]===-1){
+                continue;
+            }
+            for(j=0;j<li.length;j++){
+                if(li[j][0]===-1 && kp_connect(i,j)){
+                    x = li[i][0] + default_relative_keypoints[i][j][0]
+                    y = li[i][1] + default_relative_keypoints[i][j][1]
+                    x = Math.min(Math.max(x, 0), openpose_editor_canvas.width);
+                    y = Math.min(Math.max(y, 0), openpose_editor_canvas.height);
+                    li[j] = [x,y];
+                }
+            }
+        }
+    }
     const bgimage = openpose_editor_canvas.backgroundImage
     setPose(li);
     openpose_editor_canvas.backgroundImage = bgimage
