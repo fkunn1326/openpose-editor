@@ -133,6 +133,70 @@ function setPose(keypoints, clear = true){
     }
 }
 
+function setPoseV2(people, w, h, clear = true){
+    const canvas = openpose_editor_canvas;
+
+    if (clear)
+        canvas.clear()
+
+    canvas.backgroundColor = "#000"
+
+    const res = [];
+    for (keypoints of people) {
+        const pos = [];
+        for (let i = 0; i < keypoints["pose_keypoints_2d"].length - 1; i += 3) {
+            const chunk = keypoints["pose_keypoints_2d"].slice(i, i + 3);
+            if (chunk[2] == 0.0)
+                pos.push([-1, -1]);
+            else
+                pos.push([chunk[0] * w * chunk[2], chunk[1] * h * chunk[2]]);
+        }
+        res.push(pos);
+    }
+
+    let default_relative_keypoints = []
+    for(i=0;i<default_keypoints.length;i++){
+        default_relative_keypoints.push([])
+        for(j=0;j<default_keypoints.length;j++){
+            x = default_keypoints[j][0] - default_keypoints[i][0];
+            y = default_keypoints[j][1] - default_keypoints[i][1];
+            default_relative_keypoints[i].push([x,y])
+        }
+    }
+    kp_connect = (i,j)=>{
+        for(idx=0;idx<connect_keypoints.length;idx++){
+            cp = connect_keypoints[idx];
+            if(((cp[0]===i)&&(cp[1]===j)) || ((cp[0]===j)&&(cp[1]===i))){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    for (li of res){
+        // bfs propagate
+        while(li.some(([x,y])=>x===-1&&y===-1)){
+            for(i=0;i<li.length;i++){
+                if(li[i][0]===-1){
+                    continue;
+                }
+                for(j=0;j<li.length;j++){
+                    if(li[j][0]===-1 && kp_connect(i,j)){
+                        x = li[i][0] + default_relative_keypoints[i][j][0]
+                        y = li[i][1] + default_relative_keypoints[i][j][1]
+                        x = Math.min(Math.max(x, 0), openpose_editor_canvas.width);
+                        y = Math.min(Math.max(y, 0), openpose_editor_canvas.height);
+                        li[j] = [x,y];
+                    }
+                }
+            }
+        }
+
+        addPose(li)
+        openpose_editor_canvas.discardActiveObject();
+    }
+}
+
 function addPose(keypoints=undefined){
     if (keypoints === undefined){
         keypoints = default_keypoints;
@@ -403,17 +467,27 @@ async function loadJSON(file){
     const url = await fileToDataUrl(file)
     const response = await fetch(url)
     const json = await response.json()
-    if (json["width"] && json["height"]) {
+    var w = 0, h = 0;
+    if (json["canvas_width"] && json["canvas_height"]) {
+        // new format
+        resizeCanvas(json["canvas_width"], json["canvas_height"])
+        w = json["canvas_width"];
+        h = json["canvas_height"];
+    }else if (json["width"] && json["height"]) {
         resizeCanvas(json["width"], json["height"])
+        w = json["width"];
+        h = json["height"];
     }else{
         throw new Error('width, height is invalid');
     }
-    if (json["keypoints"].length % 18 === 0) {
+    if (json["people"] && json["people"][0]["pose_keypoints_2d"]) {
+        setPoseV2(json["people"], w, h)
+    }else if (json["keypoints"].length % 18 === 0) {
         setPose(json["keypoints"])
     }else{
         throw new Error('keypoints is invalid')
     }
-    return [json["width"], json["height"]]
+    return [w, h]
 }
 
 function savePreset(){
