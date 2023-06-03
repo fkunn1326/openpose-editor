@@ -327,8 +327,11 @@ function initCanvas(elem){
     const json_observer = new MutationObserver((m) => {
         if(gradioApp().querySelector('#tab_openpose_editor').style.display!=='block') return;
         try {
-            const raw = gradioApp().querySelector("#jsonbox").querySelector("textarea").value
-            if(raw.length!==0) detectImage(raw);
+            const json = gradioApp().querySelector("#jsonbox").querySelector("textarea")
+            if(json.value.length!==0) detectImage(json.value);
+
+            // reset #jsonbox after detectImage
+            json.value = "";
         } catch(e){console.log(e)}
     })
     json_observer.observe(gradioApp().querySelector("#jsonbox"), { "attributes": true })
