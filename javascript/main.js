@@ -114,10 +114,10 @@ function redo() {
     }
 }
 
-function setPose(keypoints){
+function setPose(keypoints, clear = true){
     const canvas = openpose_editor_canvas;
-    
-    canvas.clear()
+    if (clear)
+        canvas.clear()
 
     canvas.backgroundColor = "#000"
 
@@ -458,9 +458,23 @@ function detectImage(raw){
 
     let candidate = json["candidate"]
     let subset = json["subset"]
+    const subsets = []
+
+    for (i=0; i < subset.length; i+= 20) {
+        const sub = subset.slice(i, i + 20);
+        subsets.push(sub);
+    }
+
+    let clear = true;
+    for (subset of subsets) {
+        detectSubset(candidate, subset, clear);
+        clear = false;
+    }
+}
+
+function detectSubset(candidate, subset, clear = true){
     const li = []
-    subset = subset.splice(0, 18)
-    for (i=0; subset.length > i; i++){
+    for (i=0; 18 > i; i++){
         if (Number.isInteger(subset[i]) && subset[i] >= 0){
             li.push(candidate[subset[i]])
         }else{
@@ -514,7 +528,7 @@ function detectImage(raw){
         }
     }
     const bgimage = openpose_editor_canvas.backgroundImage
-    setPose(li);
+    setPose(li, clear);
     openpose_editor_canvas.backgroundImage = bgimage
 }
 
