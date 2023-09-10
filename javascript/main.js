@@ -58,11 +58,13 @@ let flipped = false;
 const default_keypoints = [[241,77],[241,120],[191,118],[177,183],[163,252],[298,118],[317,182],[332,245],[225,241],[213,359],[215,454],[270,240],[282,360],[286,456],[232,59],[253,60],[225,70],[260,72]]
 
 async function fileToDataUrl(file) {
-    if (file.data) {
-        // Gradio version < 3.23
-        return file.data
-    }
-    return await new Promise(r => {let a=new FileReader(); a.onload=r; a.readAsDataURL(file.blob)}).then(e => e.target.result)
+    const elem = gradioApp().querySelector(`#${file}`)
+    const input = elem.previousElementSibling
+    return await new Promise(r => {
+        let a = new FileReader();
+        a.onload = r;
+        a.readAsDataURL(input.files[0])
+    }).then(e => e.target.result)
 }
 
 function calcResolution(width, height){
@@ -398,7 +400,7 @@ function initCanvas(elem){
             json.value = "";
         } catch(e){console.log(e)}
     })
-    json_observer.observe(gradioApp().querySelector("#jsonbox"), { "attributes": true })
+    json_observer.observe(gradioApp().querySelector("#jsonbox"), { attributes: true, subtree: true })
 
     // document.addEventListener('keydown', function(e) {
     //     if (e.key !== undefined) {
