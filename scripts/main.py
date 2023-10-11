@@ -132,7 +132,7 @@ def on_ui_tabs():
     send_t2t.click(None, select_target_index, None, _js="(i) => {sendImage('txt2img', i)}")
     send_i2i.click(None, select_target_index, None, _js="(i) => {sendImage('img2img', i)}")
     reset_btn.click(None, [], None, _js="resetCanvas")
-    json_input.upload(None, json_input, [width, height], _js="loadJSON")
+    json_input.upload(None, json_input, [width, height], _js="() => {loadJSON('openpose_json_button')}")
     json_output.click(None, None, None, _js="saveJSON")
     preset_save.click(savePreset, [dummy_component, dummy_component], [preset_list, preset], _js="savePreset")
     preset_load.click(None, preset, [width, height], _js="loadPreset")
